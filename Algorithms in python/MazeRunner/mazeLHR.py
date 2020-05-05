@@ -114,6 +114,13 @@ class sprite(turtle.Turtle):
                 self.forward(24)
 
 
+class Node:
+    def __init__(self,key,x,y):
+        self.u = key
+        self.x = x
+        self.y = y
+
+
 class Graph:
 
     def __init__(self):
@@ -126,11 +133,9 @@ class Graph:
         self.graph[u].append(v)
     
     def addcoordtoNode(self,u,x,y):
-        self.graph[u].x = x
-        self.graph[u].y = y
-
-
-
+        newNode = Node(u,x,y)
+        Nodes.append(newNode)
+        
 
 
     #function to make a breadth first seach of the graph
@@ -238,41 +243,47 @@ def setupMaze(grid):
 
 def gridToGraph(grid,g):
 
-
+    gridCount = 1
 
 
     for y in range(len(grid)):                       # select each line in the grid
         for x in range(len(grid[y])): 
 
+            newNode = Node(gridCount,x,y)
+            gridCount += 1
+
             character = grid[y][x]                   # assign the grid reference to the variable character
             screen_x = -588 + (x * 24)               # assign screen_x to screen starting position for x ie -588
             screen_y = 288 - (y * 24)
-            node = x*y
+            node = gridCount
 
             if character == "s":
-                 startNode = x*y
+                 global startNode
+                 startNode = gridCount
                  g.addcoordtoNode(node,x,y)
                  if (screen_x - 24,screen_y) not in walls:
-                    g.addEdge(x*y,(x-1)*y)
+                    g.addEdge(gridCount,gridCount-1)
                  if (screen_x + 24, screen_y) not in walls:
-                    g.addEdge(x*y,(x+1)*y)
+                    g.addEdge(gridCount,gridCount+1)
                  if (screen_x, screen_y-24) not in walls:
-                    g.addEdge(x*y,(y-1)*x)
+                    g.addEdge(gridCount,gridCount + 46)
                  if (screen_x, screen_y+24) not in walls:
-                    g.addEdge(x*y,(y+24)*x)  
+                    g.addEdge(gridCount, gridCount -46)  
 
             if character == " ":
                  g.addcoordtoNode(node,x,y)
                  if (screen_x - 24,screen_y) not in walls:
-                    g.addEdge(x*y,(x-1)*y)
+                    g.addEdge(gridCount,gridCount-1)
                  if (screen_x + 24, screen_y) not in walls:
-                    g.addEdge(x*y,(x+1)*y)
+                    g.addEdge(gridCount,gridCount+1)
                  if (screen_x, screen_y-24) not in walls:
-                    g.addEdge(x*y,(y-1)*x)
+                    g.addEdge(gridCount,gridCount + 46)
                  if (screen_x, screen_y+24) not in walls:
-                    g.addEdge(x*y,(y+24)*x)
+                    g.addEdge(gridCount, gridCount -46)  
             if character == "e":
-                endNode = x*y
+                global endNode
+                g.addcoordtoNode(node,x,y)
+                endNode = gridCount
 
 
 
@@ -287,11 +298,27 @@ class spriteBFS(turtle.Turtle):
         self.speed(0)
     
     def nextMove(self,nodeNumber):
-        x = g.graph[nodeNumber].x
-        y = g.graph[nodeNumber].y
-        screen_x = -588 + (x * 24)               # assign screen_x to screen starting position for x ie -588
-        screen_y = 288 - (y * 24)
+        
 
+        #need to loop over all to find the index
+        x = 0
+        y = 0
+
+        length = len(Nodes)
+        i = 0
+
+        while i < length:
+            value = Nodes[i].u
+            if value == nodeNumber:
+                 x = Nodes[i].x
+                 y = Nodes[i].y
+                 break
+            i += 1
+
+        screen_x = -588 + (5 * 24)               # assign screen_x to screen starting position for x ie -588
+        screen_y = 288 - (3 * 24)
+
+        print("moved")
         spriteBFS.goto(screen_x,screen_y)
 
 
@@ -304,6 +331,9 @@ class spriteBFS(turtle.Turtle):
 
 
 # ############ main program starts here  ######################
+print("LENGTH OF GRIDE" + str(len(grid)))
+totalNodes = []
+Nodes = []
 g = Graph()
 maze = Maze()                # enable the maze class
 sprite = sprite()            # enable the sprite  class
@@ -313,23 +343,27 @@ walls =[]                    # create walls coordinate list
 finish = []                  # enable the finish array
 BFSqueue = []
 
-gridToGraph(grid,g)
-setupMaze(grid)              # call the setup maze function
-
 LHRcount = 0
 startNode = 0
 endNode = 0
 
+
+
+gridToGraph(grid,g)
+setupMaze(grid)              # call the setup maze function
+
+
+
 g.BFS(startNode,endNode)
 
 while True:
-        sprite.spriteRight()
-        sprite.spriteDown()
-        sprite.spriteleft()
-        sprite.spriteUp()
-        LHRcount += 1
+        # sprite.spriteRight()
+        # sprite.spriteDown()
+        # sprite.spriteleft()
+        # sprite.spriteUp()
+        # LHRcount += 1
 
         
         spriteBFS.nextMove(BFSqueue.pop(0))
 
-        time.sleep(0.01)
+        time.sleep(0.1)
