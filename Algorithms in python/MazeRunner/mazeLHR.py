@@ -119,15 +119,18 @@ class Node:
         self.u = key
         self.x = x
         self.y = y
+       
+    def setDistance(self, distance):
+         self.distance = distance
+
 
 
 class Graph:
 
     def __init__(self):
-        
-
         #default dictonaily to store the graph
         self.graph = defaultdict(list)
+
 
     def addEdge(self,u,v):
         self.graph[u].append(v)
@@ -136,17 +139,20 @@ class Graph:
         newNode = Node(u,x,y)
         Nodes.append(newNode)
         
-
-
     #function to make a breadth first seach of the graph
 
     def BFS(self,s,endNode):
 
+        
         BFScount = 0
         #mark all the vertices not visited
         visited = [False] * (10000) 
 
+
+        currentDistance = 0
         queue = []
+        distances = []
+        distances.append(currentDistance)
         #mark the source node as visted and enqueue it
 
         queue.append(s)
@@ -156,12 +162,19 @@ class Graph:
 
             #dequeue a vertex from the queue and print it
             s = queue.pop(0)
+            dist = distances.pop(0)
+
             
+            global BFSqueue
             BFSqueue.append(s)
             print(s, end = " ")
             BFScount += 1
 
-            if s == endNode:                ## leaves if the end node is found
+
+            currentDistance += 1
+
+            if s == endNode: 
+                           ## leaves if the end node is found
                 break
 
 
@@ -315,11 +328,11 @@ class spriteBFS(turtle.Turtle):
                  break
             i += 1
 
-        screen_x = -588 + (5 * 24)               # assign screen_x to screen starting position for x ie -588
-        screen_y = 288 - (3 * 24)
+        screen_x = -588 + (x * 24)               # assign screen_x to screen starting position for x ie -588
+        screen_y = 288 - (y * 24)
 
-        print("moved")
-        spriteBFS.goto(screen_x,screen_y)
+        print("moved" + str(screen_x) + str(screen_y))
+        self.goto(screen_x,screen_y)
 
 
 
@@ -356,14 +369,27 @@ setupMaze(grid)              # call the setup maze function
 
 g.BFS(startNode,endNode)
 
-while True:
-        # sprite.spriteRight()
-        # sprite.spriteDown()
-        # sprite.spriteleft()
-        # sprite.spriteUp()
-        # LHRcount += 1
 
-        
-        spriteBFS.nextMove(BFSqueue.pop(0))
+routeToEnd = []
+
+while True:
+         nextout = BFSqueue.pop()
+         print("NEXTOUT" + str(nextout))
+         routeToEnd.append(nextout)
+         if nextout == startNode:
+            break
+
+
+while True:
+        sprite.spriteRight()
+        sprite.spriteDown()
+        sprite.spriteleft()
+        sprite.spriteUp()
+        LHRcount += 1
+
+        nextmove = routeToEnd.pop(0)
+        print(nextmove)
+
+        spriteBFS.nextMove(nextmove)
 
         time.sleep(0.1)
