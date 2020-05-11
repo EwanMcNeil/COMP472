@@ -8,6 +8,7 @@ import shapefile
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 import seaborn as sns
+from matplotlib import colors
 
 
 
@@ -145,29 +146,87 @@ def getMean(table):
 
 def thresholdGraph(threshold,table):
 
-    plt.figure()
-    axes = plt.gca()
-    count = 0
-    while(count < len(table)):
-        
-        ##first need to get coords out for block
-        tup = table[count]
-        crime = tup[0]
-        xBot = tup[1]
-        xTop = tup[2]
-        yBot = tup[3]
-        yTop = tup[4]
+    # plt.figure()
+    # plt.xlim(-73.59,-73.55)
+    # plt.ylim(45.490,45.530)
+    # axes = plt.gca()
 
-        if(crime >= threshold):
-            print("high")
-            axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
-                       closed=True, facecolor='red'))
+
+    xLength = int((-73.55-(-73.59))/0.01)
+    yLength = int((45.530-45.490)/0.01)
+
+    matrix = np.zeros((xLength,yLength))
+
+    count = 0
+    y=0
+    while( y < yLength):
+        x=0
+        while(x < xLength):
+            tup = table[count]
+            crime = tup[0]
+
+            matrix[x,y] = crime
+
+            count += 1
+            x += 1
+        y +=1
+
+    print(matrix)
+
+    fig, (ax0, ax1) = plt.subplots(2, 1)
+
+  
+
+    c = ax1.pcolor(matrix, edgecolors='k', linewidths=4)
+    ax1.set_title('thick edges')
+
+    fig.tight_layout()
+    plt.show()
+
+
+    # #need to create matrix from table 
+    # #will be set to the same value
+    # dx, dy = 0.01, 0.01
+
+    # ##theres a better way to do this
+    # data = np.random.rand(10, 10) * 20
+    # cmap = colors.ListedColormap(['red', 'blue'])
+    # bounds = [0,10,20]
+    # norm = colors.BoundaryNorm(bounds, cmap.N)  
+
+
+
+    # fig, ax = plt.subplots()
+    # ax.imshow(data, cmap=cmap, norm=norm)
+
+    # # draw gridlines
+    # ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)
+    # ax.set_xticks(np.arange(-.5,-73.59,-73.55 ));
+    # ax.set_yticks(np.arange(-.5, 45.490,45.530));
+
+    # plt.show()
+
+    # while(count < len(table)):
         
-        if(crime <= threshold):
-            print("low")
-            axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
-                       closed=True, facecolor='green'))
-        count += 1
+    #     ##first need to get coords out for block
+    #     tup = table[count]
+    #     crime = tup[0]
+    #     xBot = tup[1]
+    #     xTop = tup[2]
+    #     yBot = tup[3]
+    #     yTop = tup[4]
+
+    #     if(crime >= threshold):
+    #         print("high")
+    #         axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
+    #                    closed=True, facecolor='red'))
+        
+    #     if(crime <= threshold):
+    #         print("low")
+    #         axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
+    #                    closed=True, facecolor='green'))
+    #     count += 1
+    # plt.show()
 
     
 
