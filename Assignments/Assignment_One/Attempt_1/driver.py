@@ -6,6 +6,7 @@ import pandas as pd
 import geopandas as gpd
 import shapefile
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 import seaborn as sns
 
 
@@ -20,13 +21,13 @@ data = gpd.read_file(shpPath)
 for col in data.columns: 
     print(col) 
 
-data.plot()
+# data.plot()
 
-plt.show()
-print(type(data))
+# plt.show()
+# print(type(data))
 
 
-print(data.head(9))
+# print(data.head(9))
 
 
 
@@ -60,6 +61,10 @@ print("the number of crimes within bounds is: " + str(output))
 #but also be the basis for the A*
 
 
+
+##need to use this for the modes later
+##but for now have a lookup table for the grids and 
+##their values
 class Graph:
 
     def __init__(self):
@@ -97,7 +102,7 @@ class Graph:
 #size is the multipler so I think as you go along you 
 #add a bit each time
 def graphCreation(size):
-    graph = Graph()
+    table = dict()
 
     xBot = -73.59
     xTop = -73.59+size
@@ -105,22 +110,86 @@ def graphCreation(size):
     yTop = 45.49 +size
 
     #count gives an index for each box
-    count = 1
+    #we start at bottom left here
+    count = 0
+    ## this needs to be a two loop with max bounds
 
-    while(True):
-        crime = crimesWithinBounds(xBot,xTop,yBot,yTop)
-        graph.addinfo(count,xBot, xTop, yBot, yTop, crime)
-        xBot += size
-        xTop += size
+    
+    while(yTop <= 45.53):
+       
+        while(xTop <= -73.55):
+         crime = crimesWithinBounds(xBot,xTop,yBot,yTop)
+         info = (crime,xBot, xTop, yBot, yTop)
+         table[count] = info
+         count += 1
+         xBot += size
+         xTop += size
+         print(info)
+        xBot = -73.59
+        xTop = -73.59+size
         yBot += size
         yTop += size
+    return table
+
+
+def getMean(table):
+    count = 0
+    total = 0
+    while(count < len(table)):
+        tup = table[count]
+        total += tup[0]
         count += 1
-        if(xTop >= -73.55):
-            return graph
+    mean = total/len(table)
+    return mean
+
+
+def thresholdGraph(threshold,table):
+
+    plt.figure()
+    axes = plt.gca()
+    count = 0
+    while(count < len(table)):
+        
+        ##first need to get coords out for block
+        tup = table[count]
+        crime = tup[0]
+        xBot = tup[1]
+        xTop = tup[2]
+        yBot = tup[3]
+        yTop = tup[4]
+
+        if(crime >= threshold):
+            print("high")
+            axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
+                       closed=True, facecolor='red'))
+        
+        if(crime <= threshold):
+            print("low")
+            axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
+                       closed=True, facecolor='green'))
+        count += 1
+
+    
 
 
 
-print(graphCreation(0.002).getLength)
+
+        
+       
+
+##driver calls
+
+table = graphCreation(0.01)
+
+outputTup = table.get(0)
+mean = getMean(table)
+print("the mean is " + str(outputTup[0]))
+
+
+thresholdGraph(mean,table)
+
+
+    
 
 
     
