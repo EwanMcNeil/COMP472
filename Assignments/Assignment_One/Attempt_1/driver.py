@@ -6,7 +6,8 @@ import pandas as pd
 import geopandas as gpd
 import shapefile
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+from matplotlib import colors
+import numpy as np
 
 
 
@@ -116,6 +117,10 @@ def graphCreation(size):
     while(yTop <= 45.53):
        
         while(xTop <= -73.55):
+         xBot = float('%.3f'%(xBot))
+         xTop = float('%.3f'%(xTop))
+         yBot = float('%.3f'%(yBot))
+         yTop = float('%.3f'%(yTop))
          crime = crimesWithinBounds(xBot,xTop,yBot,yTop)
          info = (crime,xBot, xTop, yBot, yTop)
          table[count] = info
@@ -141,7 +146,7 @@ def getMean(table):
     return mean
 
 
-def thresholdGraph(threshold,table):
+def thresholdGraph(blockSize,threshold,table,):
 
     # plt.figure()
     # plt.xlim(-73.59,-73.55)
@@ -149,11 +154,12 @@ def thresholdGraph(threshold,table):
     # axes = plt.gca()
 
 
-    xLength = int((-73.55-(-73.59))/0.01)
-    yLength = int((45.530-45.490)/0.01)
+    xLength = int((-73.55-(-73.59))/blockSize)
+    yLength = int((45.530-45.490)/blockSize)
 
     matrix = np.zeros((xLength,yLength))
-
+ 
+    
     count = 0
     y=0
     while( y < yLength):
@@ -161,18 +167,38 @@ def thresholdGraph(threshold,table):
         while(x < xLength):
             tup = table[count]
             crime = tup[0]
-
+            # #sets that to the one
             matrix[x,y] = crime
 
             count += 1
             x += 1
         y +=1
 
-    print(matrix)
-    imgplot = plt.imshow(matrix)
-    plt.show()
-    #fig, (ax0, ax1) = plt.subplots(2, 1)
 
+
+
+    print(matrix)
+# create discrete colormap
+    cmap = colors.ListedColormap(['red', 'blue'])
+    bounds = [0,threshold,9999]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
+
+    fig, ax = plt.subplots()
+    ax.imshow(matrix, cmap=cmap, norm=norm)
+
+# draw gridlines
+    ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)
+    ax.set_xticks(np.arange(-73.59,-73.55,blockSize ));
+    ax.set_yticks(np.arange(45.490,45.530,blockSize));
+
+    plt.show()
+
+
+
+    # print(matrix)
+    # plt.pcolor(matrix, cmap='RdYlGn')
+    # plt.show()
+  
     
     
     
@@ -238,14 +264,16 @@ def thresholdGraph(threshold,table):
 
 ##driver calls
 
-table = graphCreation(0.01)
+blockSize = 0.003
+table = graphCreation(blockSize)
 
 outputTup = table.get(0)
 mean = getMean(table)
 print("the mean is " + str(outputTup[0]))
 
 
-thresholdGraph(mean,table)
+
+thresholdGraph(blockSize,mean,table)
 
 
     
