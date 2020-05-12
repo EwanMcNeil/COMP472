@@ -6,10 +6,7 @@ import pandas as pd
 import geopandas as gpd
 import shapefile
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
-import seaborn as sns
-from matplotlib import colors
-
+import matplotlib.image as mpimg
 
 
 
@@ -172,16 +169,19 @@ def thresholdGraph(threshold,table):
         y +=1
 
     print(matrix)
-
-    fig, (ax0, ax1) = plt.subplots(2, 1)
-
-  
-
-    c = ax1.pcolor(matrix, edgecolors='k', linewidths=4)
-    ax1.set_title('thick edges')
-
-    fig.tight_layout()
+    imgplot = plt.imshow(matrix)
     plt.show()
+    #fig, (ax0, ax1) = plt.subplots(2, 1)
+
+    
+    
+    
+
+    # plt.pcolor(matrix, edgecolors='k', linewidths=4)
+    # #ax1.set_title('thick edges')
+
+    # #fig.tight_layout()
+    # plt.show()
 
 
     # #need to create matrix from table 
