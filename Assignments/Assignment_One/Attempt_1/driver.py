@@ -180,16 +180,16 @@ def thresholdGraph(blockSize,threshold,table,):
     print(matrix)
 # create discrete colormap
     cmap = colors.ListedColormap(['red', 'blue'])
-    bounds = [0,threshold,9999]
+    bounds = [0,threshold,999]
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
     fig, ax = plt.subplots()
     ax.imshow(matrix, cmap=cmap, norm=norm)
 
-# draw gridlines
+    # draw gridlines
     ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)
-    ax.set_xticks(np.arange(-73.59,-73.55,blockSize ));
-    ax.set_yticks(np.arange(45.490,45.530,blockSize));
+    # ax.set_xticks(np.arange(0,0.04,blockSize));
+    # ax.set_yticks(np.arange(0,0.04,blockSize));
 
     plt.show()
 
@@ -269,7 +269,7 @@ table = graphCreation(blockSize)
 
 outputTup = table.get(0)
 mean = getMean(table)
-print("the mean is " + str(outputTup[0]))
+print("the mean is " + str(mean))
 
 
 
