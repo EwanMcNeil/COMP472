@@ -5,40 +5,16 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import shapefile
-import matplotlib.pyplot as plt
 from matplotlib import colors
 import numpy as np
-
-
-
-shpPath = 'Shape/crime_dt.shp'
-data = gpd.read_file(shpPath)
-
-
-
-# iterating the columns 
-for col in data.columns: 
-    print(col) 
-
-# data.plot()
-
-# plt.show()
-# print(type(data))
-
-
-# print(data.head(9))
-
-
-
-
-#need to go through all of it and find
-#within the thresholds how many occured
-
+from matplotlib import pyplot as plt
+from shapely.geometry.polygon import Polygon
+from descartes import PolygonPatch
+from collections import deque
 
 
 def crimesWithinBounds(xBot,xTop,yBot,yTop):
-    shape = shapefile.Reader(shpPath, encoding='ISO-8859-1')
-    shapeRecords = shape.shapeRecords()
+    global shapeRecords
     count = 0
     for i in range(len(shapeRecords)):
         x = shapeRecords[i].shape.__geo_interface__["coordinates"][0]
@@ -50,49 +26,131 @@ def crimesWithinBounds(xBot,xTop,yBot,yTop):
     return count
 
 
-output = crimesWithinBounds(-73.552,-73.551,45.490,45.492)
-
-print("the number of crimes within bounds is: " + str(output))
-
-
-
 #trying to build the graph to both display the blocks
 #but also be the basis for the A*
 
 
 
-##need to use this for the modes later
-##but for now have a lookup table for the grids and 
-##their values
 class Graph:
+    def __init__(self,adjacency_list):
+        self.adjacency_list = adjacency_list
+        print(self.adjacency_list)
+    def get_neighbors(self, v):
+        return self.adjacency_list[v]
 
-    def __init__(self):
-        # default dictonaily to store the graph
-        self.graph = dict()
 
-    # edges are appended right to it and added if not existing
-    def addEdge(self, u, v):
-        if u not in self.graph:
-            print(True)
-            self.graph[u] = [v]
-        else:
-            print(False)
-            self.graph[u].append(v)
-        if v not in self.graph:
-            print(True)
-            self.graph[v] = [u]
-        else:
-            print(False)
-            self.graph[v].append(u)
 
-    # coords are appended after
-    def addinfo(self,count,xBot, xTop, yBot, yTop, crimeNumber):
-        self.graph[count] = [crimeNumber]
-        coords = (xBot, xTop, yBot, yTop)
-        self.graph[count].append(coords)
+     # heuristic function with equal values for all nodes
+     # which isnt really calculating anything?
+     # for now just changing to one
+    # def h(self, n):
+    #     H = {
+    #         'A': 1,
+    #         'B': 1,
+    #         'C': 1,
+    #         'D': 1
+    #     }
 
-    def getLength(self):
-        return len(self.graph)
+    #     return H[n]
+    def h(self):
+        return 1
+
+    
+    def a_star_algo(self,start_node,stop_node):
+        #open_list is a list of nodes that have been visited
+        #but neighbors not
+        #closes list is a list of nodes which have been vistied 
+        #and whos neighbords have been inspected
+
+
+        open_list = set([start_node])
+        closed_list = set()
+
+
+        #g contains currwnt distances from start node to all other nodes
+        #defualt value if its not found in the map is inf
+        #curly braces define a dict
+        g = {}
+
+        g[start_node] = 0
+
+        #parents contain an adjacency map of all nodes
+
+        parents = {}
+        parents[start_node] = start_node
+
+        while len(open_list) > 0:
+            n = None
+
+            #find the node with the lowest value of f() the evaulation fuction
+            #always sets the first to v thats why the first part is 
+            #and the finds the next best move
+            for v in open_list:
+                if n == None or g [v] + self.h() < g[n] + self.h():
+                    n = v
+
+            print("Current Node", v)
+
+
+
+            ## these are the checks to see if its either not possible
+            ## or if algo is done
+            if n == None:
+                print('Path does not exist!')
+                return None
+            #if the current node is the ending node
+            # then you take the right path
+            if n ==stop_node:
+                reconst_path = []
+
+                while parents[n] != n:
+                    reconst_path.append(n)
+                    n = parents[n]
+                
+                reconst_path.append(start_node)
+
+                reconst_path.reverse()
+                print('Path found: {}'.format(reconst_path))
+                return reconst_path
+
+
+
+        
+            #now we have the current node with the lowest value of f()
+             #have to add in the current neighbors
+
+            for(m, weight) in self.get_neighbors(n):
+            #if the current node isnt in open list and closes
+            # we have to add it to the open list and not n as its parent
+            #weight stacks it seems
+                 if m not in open_list and m not in closed_list:
+                     open_list.add(m)
+                     parents[m] = n
+                     g[m] = g[n] + weight
+
+            
+                     #see if its wuicik to first visit n them m
+                 else:
+                     if g[m] > g[n] + weight:
+                      g[m] = g[n] + weight
+                      parents[m] = n
+
+                     if m in closed_list:
+                        closed_list.remove(m)
+                        open_list.add(m)
+
+
+
+             #g(n) is the cost of the path from the start node to n, and h(n) is a heuristic function that estimates the cost of the cheapest path from n to the goal.
+             #now you remove n from the open list and add it to the closes
+             #beacuse all the neighbors were inspected and the g() calculated
+            open_list.remove(n)
+            closed_list.add(n)
+
+        print('Path does not exist!')
+        return None
+
+
 
 
 
@@ -100,7 +158,7 @@ class Graph:
 
 #size is the multipler so I think as you go along you 
 #add a bit each time
-def graphCreation(size):
+def getTable(size):
     table = dict()
 
     xBot = -73.59
@@ -113,9 +171,10 @@ def graphCreation(size):
     count = 0
     ## this needs to be a two loop with max bounds
 
+
+    ##starts at the bottom goes 
     
     while(yTop <= 45.53):
-       
         while(xTop <= -73.55):
          xBot = float('%.3f'%(xBot))
          xTop = float('%.3f'%(xTop))
@@ -146,134 +205,238 @@ def getMean(table):
     return mean
 
 
-def thresholdGraph(blockSize,threshold,table,):
-
-    # plt.figure()
-    # plt.xlim(-73.59,-73.55)
-    # plt.ylim(45.490,45.530)
-    # axes = plt.gca()
-
-
-    xLength = int((-73.55-(-73.59))/blockSize)
-    yLength = int((45.530-45.490)/blockSize)
-
-    matrix = np.zeros((xLength,yLength))
- 
+def thresholdGraph(blockSize,threshold,table):
     
+    global safetyMatrix
+    global vertices
+    fig = plt.figure(None, dpi=90)
+    ax = fig.add_subplot(111)
+  
+    verticeCount = 0
     count = 0
-    y=0
-    while( y < yLength):
-        x=0
-        while(x < xLength):
-            tup = table[count]
-            crime = tup[0]
-            # #sets that to the one
-            matrix[x,y] = crime
-
-            count += 1
-            x += 1
-        y +=1
+    xCount = 0
+    yCount = 0
+    xylength = int(0.039/blockSize)
 
 
+    while(yCount < xylength):
+        while(xCount < xylength):
+         tup = table[count]
+         crime = tup[0]
+         xBot=tup[1]
+         xTop=tup[2]
+         yBot=tup[3]
+         yTop=tup[4]
 
+         coord = (xBot,yBot) 
+         vertices[verticeCount] = coord
+         verticeCount += 1
 
-    print(matrix)
-# create discrete colormap
-    cmap = colors.ListedColormap(['red', 'blue'])
-    bounds = [0,threshold,999]
-    norm = colors.BoundaryNorm(bounds, cmap.N)
+         coord = (xTop,yBot) 
+         vertices[verticeCount] = coord
+         verticeCount += 1
 
-    fig, ax = plt.subplots()
-    ax.imshow(matrix, cmap=cmap, norm=norm)
+         polygon = Polygon([(xBot, yBot),(xBot,yTop),(xTop,yTop),(xTop,yBot)])
+         if(crime < threshold):
+             safetyMatrix[xCount,yCount] = 1 
+             patch = PolygonPatch(polygon, fc= 'red')
+         else:
+             patch = PolygonPatch(polygon, fc= 'blue')
+         ax.add_patch(patch)
+         count += 1
+         xCount += 1
+         print("x,y,count" ,xCount,yCount,count)
+        xCount = 0
+        yCount += 1
 
-    # draw gridlines
-    ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)
-    # ax.set_xticks(np.arange(0,0.04,blockSize));
-    # ax.set_yticks(np.arange(0,0.04,blockSize));
-
+    safetyMatrix = safetyMatrix.transpose()
+    safetyMatrix = np.flip(safetyMatrix, axis=None)
+    print(safetyMatrix)
+    axes = plt.gca()
+    axes.set_xlim([-73.59,-73.55])
+    axes.set_ylim([45.49,45.53])
+    ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
+    ax.set_yticks(np.arange(45.49,45.53,blockSize));
+    plt.xticks(rotation=45) 
     plt.show()
 
 
+def createAdjacency(size,mean):
+    global vertices
+    graph = dict()
 
-    # print(matrix)
-    # plt.pcolor(matrix, cmap='RdYlGn')
-    # plt.show()
+    count = 0
+
+    while(count< len(vertices)): 
+        tuple = vertices[count]
+        x = tuple[0]
+        y = tuple[1]
+
+        #I think you can do this
+        graph[count] = []
+
+        point1 = findVertice(x-size,y+size)
+        point2 = findVertice(x,y+size)
+        point3 = findVertice(x+size,y+size)
+        point4 = findVertice(x+size,y)
+        point5 = findVertice(x+size,y-size)
+        point6 = findVertice(x,y-size)
+        point7 = findVertice(x-size,y-size)
+        point8 = findVertice(x-size,y)
+
+        #this is me resolving maybe make a better 
+        #data structure
+        quadrent1Crime =  crimesWithinBounds(x-size,x,y,y+size)
+        quadrent2Crime = crimesWithinBounds(x,x+size,y,y+size)
+        quadrent3Crime = crimesWithinBounds(x,x+size,y-size,y)
+        quadrent4Crime = crimesWithinBounds(x-size,x,y-size,y)
+
+        #true is less (blue)
+        #false is more (yellow) 
+        oneBool = False
+        twoBool = False
+        threeBool = False
+        fourBool =False
+
+        if(quadrent1Crime < mean):
+            oneBool = True
+        
+        if(quadrent2Crime < mean):
+            twoBool = True
+        
+        if(quadrent3Crime< mean):
+            threeBool = True
+        
+        if(quadrent4Crime< mean):
+            fourBool = True
+        #finding out the attachments
+
+
+        #diagonals over blue
+        if(oneBool):
+            if(point1 != None):
+                tuple = (point1,1.5)
+                graph[count].append(tuple)
+
+        if(twoBool):
+            if(point3 != None):
+                tuple = (point3,1.5)
+                graph[count].append(tuple)
+        
+        if(threeBool):
+            if(point5 != None):
+                tuple = (point5,1.5)
+                graph[count].append(tuple)
+
+        if(fourBool):
+            if(point7 != None):
+                tuple = (point7,1.5)
+                graph[count].append(tuple)
+
+        #Straight ones
+        if((oneBool) or (twoBool)):
+            if(point2 != None):
+                if((oneBool) and (twoBool)):
+                    tuple = (point2,1.3)
+                    graph[count].append(tuple)
+                else:
+                    tuple = (point2,1)
+                    graph[count].append(tuple)
+        
+
+        if((twoBool) or (threeBool)):
+            if(point4 != None):
+
+                if((twoBool) and  (threeBool)):
+                    tuple = (point4,1.3)
+                    graph[count].append(tuple)
+                else:
+                    tuple = (point4,1)
+                    graph[count].append(tuple)
+
+        if((threeBool) or (fourBool)):
+            if(point6 != None):
+                
+                if((threeBool) and (fourBool)):
+                 tuple = (point6,1.3)
+                 graph[count].append(tuple)
+                else:
+                    tuple = (point6,1)
+                    graph[count].append(tuple)
+
+        if((fourBool) or (oneBool)):
+            if(point8 != None):
+                
+                if((oneBool) and  (twoBool)):
+                    tuple = (point8,1.3)
+                    graph[count].append(tuple)
+                else:
+                    tuple = (point8,1)
+                    graph[count].append(tuple)
+        print("COUNT", count)
+        print(graph[count])
+        count += 1
+    print(graph)
+    return graph
+
+
+
+def findVertice(x, y):
+    global vertices
+    count = 0
   
-    
-    
-    
-
-    # plt.pcolor(matrix, edgecolors='k', linewidths=4)
-    # #ax1.set_title('thick edges')
-
-    # #fig.tight_layout()
-    # plt.show()
-
-
-    # #need to create matrix from table 
-    # #will be set to the same value
-    # dx, dy = 0.01, 0.01
-
-    # ##theres a better way to do this
-    # data = np.random.rand(10, 10) * 20
-    # cmap = colors.ListedColormap(['red', 'blue'])
-    # bounds = [0,10,20]
-    # norm = colors.BoundaryNorm(bounds, cmap.N)  
+    while(count <len(vertices)):
+        tuple = vertices[count]
+        xSearch = tuple[0]
+        ySearch = tuple[1]
+        if(x == xSearch) and (y == ySearch):
+            return count
+        count += 1
+    return None
 
 
-
-    # fig, ax = plt.subplots()
-    # ax.imshow(data, cmap=cmap, norm=norm)
-
-    # # draw gridlines
-    # ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)
-    # ax.set_xticks(np.arange(-.5,-73.59,-73.55 ));
-    # ax.set_yticks(np.arange(-.5, 45.490,45.530));
-
-    # plt.show()
-
-    # while(count < len(table)):
-        
-    #     ##first need to get coords out for block
-    #     tup = table[count]
-    #     crime = tup[0]
-    #     xBot = tup[1]
-    #     xTop = tup[2]
-    #     yBot = tup[3]
-    #     yTop = tup[4]
-
-    #     if(crime >= threshold):
-    #         print("high")
-    #         axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
-    #                    closed=True, facecolor='red'))
-        
-    #     if(crime <= threshold):
-    #         print("low")
-    #         axes.add_patch(Polygon([(xBot, yBot), (xBot, yTop), (xTop, yBot), (xTop, yTop)],
-    #                    closed=True, facecolor='green'))
-    #     count += 1
-    # plt.show()
-
-    
-
-
-
-
-        
-       
 
 ##driver calls
-
+shpPath = 'Shape/crime_dt.shp'
+#creating global matrix with size of the grid
+shape = shapefile.Reader(shpPath, encoding='ISO-8859-1')
+shapeRecords = shape.shapeRecords()
+vertices = dict()
 blockSize = 0.003
-table = graphCreation(blockSize)
 
-outputTup = table.get(0)
+#creating global matrix with size of the grid
+xylength = int(0.039/0.003)
+safetyMatrix = np.zeros((xylength, xylength))
+#safetyMatrix = [[0 for x in range(xylength)] for y in range(xylength)]
+
+
+
+table = getTable(blockSize)
 mean = getMean(table)
 print("the mean is " + str(mean))
 
 
 
+#need a global list of vertices
+#and an ajacency list
+#vertices will be added as a list from the bottom of the blocks
+#with the bottom being zero
+
+
+
+
 thresholdGraph(blockSize,mean,table)
+
+adjaencyGraph = createAdjacency(blockSize,mean)
+
+
+graph1 = Graph(adjaencyGraph)
+
+print(graph1.a_star_algo(3,333))
+
+
+print(safetyMatrix)
+##need to transpose the safetyMatrix
 
 
     
