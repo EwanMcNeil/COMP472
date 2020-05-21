@@ -12,6 +12,9 @@ from shapely.geometry.polygon import Polygon
 from descartes import PolygonPatch
 from collections import deque
 import math  
+import pickle
+from copy import copy
+
 
 def crimesWithinBounds(xBot,xTop,yBot,yTop):
     global shapeRecords
@@ -116,7 +119,7 @@ class Graph:
                 reconst_path.append(start_node)
 
                 reconst_path.reverse()
-                print('Path found: {}'.format(reconst_path))
+                #print('Path found: {}'.format(reconst_path))
                 return reconst_path
 
 
@@ -217,6 +220,7 @@ def getMean(table):
 
 def thresholdGraph(blockSize,threshold,table):
     
+    global globalPolygons
     global safetyMatrix
     global vertices
     fig = plt.figure(None, dpi=90)
@@ -244,9 +248,9 @@ def thresholdGraph(blockSize,threshold,table):
          vertices[verticeCount] = coord
          verticeCount += 1
 
-         coord = (xTop,yBot) 
-         vertices[verticeCount] = coord
-         verticeCount += 1
+        #  coord = (xTop,yBot) 
+        #  vertices[verticeCount] = coord
+        #  verticeCount += 1
 
          polygon = Polygon([(xBot, yBot),(xBot,yTop),(xTop,yTop),(xTop,yBot)])
          if(crime < threshold):
@@ -254,6 +258,8 @@ def thresholdGraph(blockSize,threshold,table):
              patch = PolygonPatch(polygon, fc= 'red')
          else:
              patch = PolygonPatch(polygon, fc= 'blue')
+         new_patch = copy(patch)
+         globalPolygons.append(new_patch)
          ax.add_patch(patch)
          count += 1
          xCount += 1
@@ -271,6 +277,7 @@ def thresholdGraph(blockSize,threshold,table):
     ax.set_yticks(np.arange(45.49,45.53,blockSize));
     plt.xticks(rotation=45) 
     plt.show()
+    return ax
 
 
 def createAdjacency(size,mean):
@@ -424,7 +431,6 @@ safetyMatrix = np.zeros((xylength, xylength))
 
 
 table = getTable(blockSize)
-# mean = getMean(table)
 mean = 300
 print("the mean is " + str(mean))
 
@@ -437,22 +443,53 @@ print("the mean is " + str(mean))
 
 
 
+globalPolygons = []
 
-thresholdGraph(blockSize,mean,table)
+colorplotax = thresholdGraph(blockSize,mean,table)
+
+fig = plt.figure(None, dpi=90)
+ax = fig.add_subplot(111)
+
+polycount = 0
+while(polycount < len(globalPolygons)):
+    ax.add_patch(globalPolygons[polycount])
+    polycount += 1
+
+axes = plt.gca()
+axes.set_xlim([-73.59,-73.55])
+axes.set_ylim([45.49,45.53])
+ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
+ax.set_yticks(np.arange(45.49,45.53,blockSize));
+plt.xticks(rotation=45) 
 
 adjaencyGraph = createAdjacency(blockSize,mean)
 
 
 graph1 = Graph(adjaencyGraph)
 
-print(graph1.a_star_algo(3,23))
-
-path = graph1.a_star_algo(3,23)
 
 
 
+path = graph1.a_star_algo(3,125)
+print(path)
+x = []
+y = []
 
-##need to transpose the safetyMatrix
+finalloop = 0
+while(finalloop < len(path)):
+    tup = vertices[path[finalloop]]
+    x.append(tup[0])
+    y.append(tup[1])
+    finalloop += 1
+
+print("VERTLEN", len(vertices))
+
+print('polygons', len(globalPolygons))
+
+plt.plot(x,y)
+plt.show()
+
+
 
 
     
