@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from shapely.geometry.polygon import Polygon
 from descartes import PolygonPatch
 from collections import deque
-
+import math  
 
 def crimesWithinBounds(xBot,xTop,yBot,yTop):
     global shapeRecords
@@ -43,17 +43,21 @@ class Graph:
      # heuristic function with equal values for all nodes
      # which isnt really calculating anything?
      # for now just changing to one
-    # def h(self, n):
-    #     H = {
-    #         'A': 1,
-    #         'B': 1,
-    #         'C': 1,
-    #         'D': 1
-    #     }
+    def h(self, current,goal):
+        global vertices
+        currentXYTup = vertices[current]
+        goalXYTup = vertices[goal]
+        x1 = currentXYTup[0]
+        y1 = currentXYTup[1]
 
-    #     return H[n]
-    def h(self):
-        return 1
+
+        x2 = goalXYTup[0]
+        y2 = goalXYTup[1]
+
+        dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+        return dist
+    
 
     
     def a_star_algo(self,start_node,stop_node):
@@ -86,7 +90,7 @@ class Graph:
             #always sets the first to v thats why the first part is 
             #and the finds the next best move
             for v in open_list:
-                if n == None or g [v] + self.h() < g[n] + self.h():
+                if n == None or g [v] + self.h(v,stop_node) < g[n] + self.h(n,stop_node):
                     n = v
 
             print("Current Node", v)
@@ -98,6 +102,8 @@ class Graph:
             if n == None:
                 print('Path does not exist!')
                 return None
+
+
             #if the current node is the ending node
             # then you take the right path
             if n ==stop_node:
@@ -117,27 +123,30 @@ class Graph:
 
         
             #now we have the current node with the lowest value of f()
-             #have to add in the current neighbors
+            #have to add in the current neighbors
 
             for(m, weight) in self.get_neighbors(n):
             #if the current node isnt in open list and closes
             # we have to add it to the open list and not n as its parent
             #weight stacks it seems
                  if m not in open_list and m not in closed_list:
-                     open_list.add(m)
-                     parents[m] = n
-                     g[m] = g[n] + weight
+                     
+                    print("if both", m)
+                    open_list.add(m)
+                    parents[m] = n
+                    g[m] = g[n] + weight
 
             
                      #see if its wuicik to first visit n them m
-                 else:
-                     if g[m] > g[n] + weight:
-                      g[m] = g[n] + weight
-                      parents[m] = n
+                #  else:
+                #      print("else", m)
+                #      if g[m] > g[n] + weight:
+                #       g[m] = g[n] + weight
+                #       parents[m] = n
 
-                     if m in closed_list:
-                        closed_list.remove(m)
-                        open_list.add(m)
+                #      if m in closed_list:
+                #         closed_list.remove(m)
+                #         open_list.add(m)
 
 
 
@@ -203,6 +212,7 @@ def getMean(table):
         count += 1
     mean = total/len(table)
     return mean
+    
 
 
 def thresholdGraph(blockSize,threshold,table):
@@ -228,6 +238,8 @@ def thresholdGraph(blockSize,threshold,table):
          yBot=tup[3]
          yTop=tup[4]
 
+
+            #adds a vertice into the dict
          coord = (xBot,yBot) 
          vertices[verticeCount] = coord
          verticeCount += 1
@@ -412,7 +424,8 @@ safetyMatrix = np.zeros((xylength, xylength))
 
 
 table = getTable(blockSize)
-mean = getMean(table)
+# mean = getMean(table)
+mean = 300
 print("the mean is " + str(mean))
 
 
@@ -432,10 +445,13 @@ adjaencyGraph = createAdjacency(blockSize,mean)
 
 graph1 = Graph(adjaencyGraph)
 
-print(graph1.a_star_algo(3,333))
+print(graph1.a_star_algo(3,23))
+
+path = graph1.a_star_algo(3,23)
 
 
-print(safetyMatrix)
+
+
 ##need to transpose the safetyMatrix
 
 
