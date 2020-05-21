@@ -431,7 +431,7 @@ safetyMatrix = np.zeros((xylength, xylength))
 
 
 table = getTable(blockSize)
-mean = 300
+mean = getMean(table)
 print("the mean is " + str(mean))
 
 
@@ -468,26 +468,29 @@ adjaencyGraph = createAdjacency(blockSize,mean)
 graph1 = Graph(adjaencyGraph)
 
 
+while True:
+    startNode = input("enter the starting node")
+    startInt = int(startNode)
+    endNode = input("enter the end node")
+    endInt = int(endNode)
+    path = graph1.a_star_algo(startInt,endInt)
+    print(path)
+    x = []
+    y = []
 
+    finalloop = 0
+    while(finalloop < len(path)):
+        tup = vertices[path[finalloop]]
+        x.append(tup[0])
+        y.append(tup[1])
+        finalloop += 1
 
-path = graph1.a_star_algo(3,125)
-print(path)
-x = []
-y = []
+    print("VERTLEN", len(vertices))
 
-finalloop = 0
-while(finalloop < len(path)):
-    tup = vertices[path[finalloop]]
-    x.append(tup[0])
-    y.append(tup[1])
-    finalloop += 1
+    print('polygons', len(globalPolygons))
 
-print("VERTLEN", len(vertices))
-
-print('polygons', len(globalPolygons))
-
-plt.plot(x,y)
-plt.show()
+    plt.plot(x,y)
+    plt.show()
 
 
 
