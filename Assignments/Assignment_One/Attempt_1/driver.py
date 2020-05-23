@@ -221,7 +221,6 @@ def getMean(table):
 def thresholdGraph(blockSize,threshold,table):
     
     global globalPolygons
-    global safetyMatrix
     global vertices
     fig = plt.figure(None, dpi=90)
     ax = fig.add_subplot(111)
@@ -254,7 +253,6 @@ def thresholdGraph(blockSize,threshold,table):
 
          polygon = Polygon([(xBot, yBot),(xBot,yTop),(xTop,yTop),(xTop,yBot)])
          if(crime < threshold):
-             safetyMatrix[xCount,yCount] = 1 
              patch = PolygonPatch(polygon, fc= 'red')
          else:
              patch = PolygonPatch(polygon, fc= 'blue')
@@ -266,10 +264,6 @@ def thresholdGraph(blockSize,threshold,table):
          print("x,y,count" ,xCount,yCount,count)
         xCount = 0
         yCount += 1
-
-    safetyMatrix = safetyMatrix.transpose()
-    safetyMatrix = np.flip(safetyMatrix, axis=None)
-    print(safetyMatrix)
     axes = plt.gca()
     axes.set_xlim([-73.59,-73.55])
     axes.set_ylim([45.49,45.53])
@@ -400,6 +394,7 @@ def createAdjacency(size,mean):
 
 
 
+##used to find the node from the vertice count
 def findVertice(x, y):
     global vertices
     count = 0
@@ -414,6 +409,32 @@ def findVertice(x, y):
     return None
 
 
+def estimateNode(x ,y):
+    # -73.59 x origin
+    # 45.49 y origin
+    #just using the global block size varible
+    global blockSize
+    xDiff = x-(-73.59)
+    yDiff = y-(45.49)
+
+    xDiv = xDiff/blockSize
+    xDiv = math.floor(xDiv)
+
+    yDiv = yDiff/blockSize
+    yDiv = math.floor(xDiv)
+
+    xMult = xDiv*blockSize
+    yMult = yDiv*blockSize
+
+    outputX = -73.59 + xMult
+    outputY = 45.49 +yMult
+
+    node = findVertice(outputX,outputY)
+    return node
+
+
+
+
 
 ##driver calls
 shpPath = 'Shape/crime_dt.shp'
@@ -421,12 +442,11 @@ shpPath = 'Shape/crime_dt.shp'
 shape = shapefile.Reader(shpPath, encoding='ISO-8859-1')
 shapeRecords = shape.shapeRecords()
 vertices = dict()
-blockSize = 0.003
 
-#creating global matrix with size of the grid
-xylength = int(0.039/0.003)
-safetyMatrix = np.zeros((xylength, xylength))
-#safetyMatrix = [[0 for x in range(xylength)] for y in range(xylength)]
+
+blockSize = input("enter the size of the blocks (0.003 or 0.002 or 0.001")
+blockSize = float(blockSize)
+
 
 
 
@@ -480,28 +500,33 @@ while(endcheck == 0):
     ax.set_yticks(np.arange(45.49,45.53,blockSize));
     plt.xticks(rotation=45) 
 
-    startNode = input("enter the starting node")
+    startX = input("enter the x Coord of Starting Node")
+    startX = float(startX)
+    startY = input("enter the y coord of starting Node")
+    startY = float(startY)
+    startNode = estimateNode(startX,startY)
     startInt = int(startNode)
     endNode = input("enter the end node")
     endInt = int(endNode)
     path = graph1.a_star_algo(startInt,endInt)
-    print(path)
-    x = []
-    y = []
+    if(path != None):
+        print(path)
+        x = []
+        y = []
 
-    finalloop = 0
-    while(finalloop < len(path)):
-        tup = vertices[path[finalloop]]
-        x.append(tup[0])
-        y.append(tup[1])
-        finalloop += 1
+        finalloop = 0
+        while(finalloop < len(path)):
+            tup = vertices[path[finalloop]]
+            x.append(tup[0])
+            y.append(tup[1])
+            finalloop += 1
 
-    print("VERTLEN", len(vertices))
+        print("VERTLEN", len(vertices))
 
-    print('polygons', len(globalPolygons))
+        print('polygons', len(globalPolygons))
 
-    plt.plot(x,y)
-    plt.show()
+        plt.plot(x,y)
+        plt.show()
 
     askforStop = input("enter 0 to try another path")
     endcheck = int(askforStop)
