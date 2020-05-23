@@ -445,30 +445,41 @@ print("the mean is " + str(mean))
 
 globalPolygons = []
 
+globalPolygonsCopy = []
 colorplotax = thresholdGraph(blockSize,mean,table)
 
-fig = plt.figure(None, dpi=90)
-ax = fig.add_subplot(111)
 
-polycount = 0
-while(polycount < len(globalPolygons)):
-    ax.add_patch(globalPolygons[polycount])
-    polycount += 1
-
-axes = plt.gca()
-axes.set_xlim([-73.59,-73.55])
-axes.set_ylim([45.49,45.53])
-ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
-ax.set_yticks(np.arange(45.49,45.53,blockSize));
-plt.xticks(rotation=45) 
 
 adjaencyGraph = createAdjacency(blockSize,mean)
 
 
 graph1 = Graph(adjaencyGraph)
 
+endcheck = 0
+while(endcheck == 0):
+    globalPolygonsCopy.clear()
 
-while True:
+    polycount = 0
+    while(polycount < len(globalPolygons)):
+        new_patch = copy(globalPolygons[polycount])
+        globalPolygonsCopy.append(new_patch)
+        polycount += 1
+
+    fig = plt.figure(None, dpi=90)
+    ax = fig.add_subplot(111)
+
+    polycount = 0
+    while(polycount < len(globalPolygons)):
+        ax.add_patch(globalPolygonsCopy[polycount])
+        polycount += 1
+
+    axes = plt.gca()
+    axes.set_xlim([-73.59,-73.55])
+    axes.set_ylim([45.49,45.53])
+    ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
+    ax.set_yticks(np.arange(45.49,45.53,blockSize));
+    plt.xticks(rotation=45) 
+
     startNode = input("enter the starting node")
     startInt = int(startNode)
     endNode = input("enter the end node")
@@ -491,6 +502,9 @@ while True:
 
     plt.plot(x,y)
     plt.show()
+
+    askforStop = input("enter 0 to try another path")
+    endcheck = int(askforStop)
 
 
 
