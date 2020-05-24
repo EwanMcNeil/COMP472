@@ -284,16 +284,20 @@ def thresholdGraph(blockSize,threshold,table):
     return ax
 
 
-def createAdjacency(size,mean):
+def createAdjacency(size,mean,table,width):
     global vertices
     graph = dict()
 
     count = 0
 
-    while(count< len(vertices)): 
-        tuple = vertices[count]
-        x = tuple[0]
-        y = tuple[1]
+
+    #changing this to exlude the out nodes and calculating just from bottom right perspetive
+    while(count< len(table)): 
+
+        #find the bottom right vertice
+        tuple = table[count]
+        x = tuple[1]
+        y = tuple[3]
 
         #I think you can do this
         graph[count] = []
@@ -309,11 +313,26 @@ def createAdjacency(size,mean):
 
         #this is me resolving maybe make a better 
         #data structure
-        quadrent1Crime =  crimesWithinBounds(x-size,x,y,y+size)
-        quadrent2Crime = crimesWithinBounds(x,x+size,y,y+size)
-        quadrent3Crime = crimesWithinBounds(x,x+size,y-size,y)
-        quadrent4Crime = crimesWithinBounds(x-size,x,y-size,y)
+        try:
+            quadrent1Crime =  table[count-1][0]
+        except KeyError:
+            quadrent1Crime = 1000
+        
+        try:
+            quadrent2Crime =  table[count][0]
+        except KeyError:
+            quadrent2Crime = 1000
 
+        try:
+            quadrent3Crime = table[count - width][0]
+        except KeyError:
+            quadrent3Crime = 1000
+        
+        try:
+            quadrent4Crime = table[count-width-1][0]
+        except KeyError:
+            quadrent4Crime = 1000
+        
         #true is less (blue)
         #false is more (yellow) 
         oneBool = False
@@ -457,6 +476,9 @@ vertices = dict()
 blockSize = input("enter the size of the blocks (0.003 or 0.002 or 0.001")
 blockSize = float(blockSize)
 
+width = 0.04/blockSize
+width = int(width)
+print(width)
 
 
 
@@ -483,7 +505,7 @@ colorplotax = thresholdGraph(blockSize,mean,table)
 
 
 
-adjaencyGraph = createAdjacency(blockSize,mean)
+adjaencyGraph = createAdjacency(blockSize,mean,table,width)
 
 
 graph1 = Graph(adjaencyGraph)
