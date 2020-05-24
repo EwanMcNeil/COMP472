@@ -93,7 +93,7 @@ class Graph:
             #always sets the first to v thats why the first part is 
             #and the finds the next best move
             for v in open_list:
-                if n == None or g [v] + self.h(v,stop_node) < g[n] + self.h(n,stop_node):
+                if n == None or g[v] + self.h(v,stop_node) < g[n] + self.h(n,stop_node):
                     n = v
 
             print("Current Node", v)
@@ -140,7 +140,7 @@ class Graph:
                     g[m] = g[n] + weight
 
             
-                     #see if its wuicik to first visit n them m
+                
                 #  else:
                 #      print("else", m)
                 #      if g[m] > g[n] + weight:
@@ -185,7 +185,7 @@ def getTable(size):
 
 
     ##starts at the bottom goes 
-    
+    yCount  =0
     while(yTop <= 45.53):
         while(xTop <= -73.55):
          xBot = float('%.3f'%(xBot))
@@ -198,11 +198,12 @@ def getTable(size):
          count += 1
          xBot += size
          xTop += size
-         print(info)
         xBot = -73.59
         xTop = -73.59+size
         yBot += size
         yTop += size
+        yCount += 1
+    print(yCount)
     return table
 
 
@@ -239,7 +240,7 @@ def thresholdGraph(blockSize,threshold,table):
     count = 0
     xCount = 0
     yCount = 0
-    xylength = int(0.039/blockSize)
+    xylength = int(0.04/blockSize)
 
 
     while(yCount < xylength):
@@ -437,6 +438,10 @@ def findVertice(x, y):
         count += 1
     return None
 
+def truncate(n, decimals=0):
+    multiplier = 10 ** decimals
+    return int(n * multiplier) / multiplier
+
 
 def estimateNode(x ,y):
     # -73.59 x origin
@@ -466,6 +471,9 @@ def estimateNode(x ,y):
 
     outputX = -73.59 + xMult
     outputY = 45.49 +yMult
+
+    outputX = truncate(outputX, 3)
+    outputY = truncate(outputY,3)
 
     print("estimates", outputX,",", outputY)
 
@@ -578,12 +586,10 @@ while(endcheck == 0):
             y.append(tup[1])
             finalloop += 1
 
-        print("VERTLEN", len(vertices))
-
-        print('polygons', len(globalPolygons))
 
         plt.plot(x,y)
-        plt.show()
+
+    plt.show(block = False)
 
     askforStop = input("enter 0 to try another path")
     endcheck = int(askforStop)
