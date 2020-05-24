@@ -206,15 +206,25 @@ def getTable(size):
     return table
 
 
-def getMean(table):
+def getMean(table, threshold):
+
+    ##create a new organize list 
+    crimeList = []
     count = 0
-    total = 0
     while(count < len(table)):
         tup = table[count]
-        total += tup[0]
+        total = tup[0]
+        crimeList.append(total)
         count += 1
-    mean = total/len(table)
-    return mean
+
+    index = count*threshold
+    index = count - index
+    index = int(index)
+    crimeList.sort(reverse = True)
+    print(crimeList)
+    median = crimeList[index] 
+    print(median)
+    return median
     
 
 
@@ -451,7 +461,10 @@ blockSize = float(blockSize)
 
 
 table = getTable(blockSize)
-mean = getMean(table)
+
+inputThreshold = input("enter the threshold percentage")
+inputThreshold = float(inputThreshold)
+mean = getMean(table, inputThreshold)
 print("the mean is " + str(mean))
 
 
