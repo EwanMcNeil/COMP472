@@ -294,7 +294,7 @@ def createAdjacency(size,mean,table,width):
     #changing this to exlude the out nodes and calculating just from bottom right perspetive
     while(count< len(table)): 
 
-        #find the bottom right vertice
+        #find the bottom left vertice
         tuple = table[count]
         x = tuple[1]
         y = tuple[3]
@@ -443,20 +443,31 @@ def estimateNode(x ,y):
     # 45.49 y origin
     #just using the global block size varible
     global blockSize
-    xDiff = x-(-73.59)
-    yDiff = y-(45.49)
 
-    xDiv = xDiff/blockSize
-    xDiv = math.floor(xDiv)
+    xcount = 0
+    xstart = -73.59
+    while(xstart < x):
+        xcount += 1
+        xstart += blockSize
+    
+    xcount -= 1
+    
+    ycount = 0
+    ystart = 45.49
+    while(ystart < y):
+        ycount += 1
+        ystart += blockSize
 
-    yDiv = yDiff/blockSize
-    yDiv = math.floor(xDiv)
+    ycount -= 1
 
-    xMult = xDiv*blockSize
-    yMult = yDiv*blockSize
+   
+    xMult = xcount*blockSize
+    yMult = ycount*blockSize
 
     outputX = -73.59 + xMult
     outputY = 45.49 +yMult
+
+    print("estimates", outputX,",", outputY)
 
     node = findVertice(outputX,outputY)
     return node
@@ -539,10 +550,21 @@ while(endcheck == 0):
     startX = float(startX)
     startY = input("enter the y coord of starting Node")
     startY = float(startY)
+
+    plt.plot(startX, startY, marker='o', markersize=3, color="black")
     startNode = estimateNode(startX,startY)
     startInt = int(startNode)
-    endNode = input("enter the end node")
+
+
+    endX = input("enter the x Coord of endNode")
+    endX = float(endX)
+    endY = input("enter the y Coord of end Node")
+    endY = float(endY)
+    plt.plot(endX, endY, marker='o', markersize=3, color="black")
+
+    endNode = estimateNode(endX,endY)
     endInt = int(endNode)
+
     path = graph1.a_star_algo(startInt,endInt)
     if(path != None):
         print(path)
