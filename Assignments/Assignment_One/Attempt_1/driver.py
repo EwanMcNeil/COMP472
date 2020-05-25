@@ -37,7 +37,6 @@ def crimesWithinBounds(xBot,xTop,yBot,yTop):
 class Graph:
     def __init__(self,adjacency_list):
         self.adjacency_list = adjacency_list
-        print(self.adjacency_list)
     def get_neighbors(self, v):
         return self.adjacency_list[v]
 
@@ -140,7 +139,6 @@ class Graph:
                     g[m] = g[n] + weight
 
             
-                
                 #  else:
                 #      print("else", m)
                 #      if g[m] > g[n] + weight:
@@ -173,6 +171,8 @@ class Graph:
 def getTable(size):
     table = dict()
 
+    print("size in table", size)
+
     xBot = -73.59
     xTop = -73.59+size
     yBot = 45.49
@@ -203,7 +203,6 @@ def getTable(size):
         yBot += size
         yTop += size
         yCount += 1
-    print(yCount)
     return table
 
 
@@ -222,9 +221,7 @@ def getMean(table, threshold):
     index = count - index
     index = int(index)
     crimeList.sort(reverse = True)
-    print(crimeList)
     median = crimeList[index] 
-    print(median)
     return median
     
 
@@ -236,7 +233,6 @@ def thresholdGraph(blockSize,threshold,table):
     fig = plt.figure(None, dpi=90)
     ax = fig.add_subplot(111)
   
-    verticeCount = 0
     count = 0
     xCount = 0
     yCount = 0
@@ -255,86 +251,96 @@ def thresholdGraph(blockSize,threshold,table):
 
             #adds a vertice into the dict
          coord = (xBot,yBot) 
-         vertices[verticeCount] = coord
-         verticeCount += 1
-
-        #  coord = (xTop,yBot) 
-        #  vertices[verticeCount] = coord
-        #  verticeCount += 1
+         vertices[count] = coord
 
          polygon = Polygon([(xBot, yBot),(xBot,yTop),(xTop,yTop),(xTop,yBot)])
          if(crime < threshold):
-             patch = PolygonPatch(polygon, fc= 'red')
+             patch = PolygonPatch(polygon, fc= 'purple')
          else:
-             patch = PolygonPatch(polygon, fc= 'blue')
+             patch = PolygonPatch(polygon, fc= 'yellow')
          new_patch = copy(patch)
          globalPolygons.append(new_patch)
          ax.add_patch(patch)
          count += 1
          xCount += 1
-         print("x,y,count" ,xCount,yCount,count)
         xCount = 0
         yCount += 1
+
     axes = plt.gca()
     axes.set_xlim([-73.59,-73.55])
     axes.set_ylim([45.49,45.53])
     ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
     ax.set_yticks(np.arange(45.49,45.53,blockSize));
     plt.xticks(rotation=45) 
-    plt.show()
+    plt.show(block = False)
     return ax
 
 
+
+#somthing wrong in create Adjancyh its skipping paths it shoundte 
 def createAdjacency(size,mean,table,width):
     global vertices
     graph = dict()
 
     count = 0
-
-
-    #changing this to exlude the out nodes and calculating just from bottom right perspetive
+   
+    #changing this to exlude the out nodes and calculating just from bottom left perspetive
     while(count< len(table)): 
 
         #find the bottom left vertice
-        tuple = table[count]
-        x = tuple[1]
-        y = tuple[3]
+        outTuple = table[count]
+        x = outTuple[1]
+        y = outTuple[3]
 
         #I think you can do this
         graph[count] = []
 
+        #the one point for quadrents and points is top left
+        #goes clockwise
+
+        print("currentNode", count)
+        print("X", x)
+        print("Y", y)
+       
         point1 = findVertice(x-size,y+size)
         point2 = findVertice(x,y+size)
         point3 = findVertice(x+size,y+size)
+        print("first find",x-size,y+size)
         point4 = findVertice(x+size,y)
         point5 = findVertice(x+size,y-size)
         point6 = findVertice(x,y-size)
         point7 = findVertice(x-size,y-size)
         point8 = findVertice(x-size,y)
 
+        print(point1,point2,point3,point4,point5,point6,point7,point8)
+
         #this is me resolving maybe make a better 
         #data structure
         try:
             quadrent1Crime =  table[count-1][0]
         except KeyError:
+            print(KeyError, "one")
             quadrent1Crime = 1000
         
         try:
             quadrent2Crime =  table[count][0]
         except KeyError:
+            print(KeyError, "two")
             quadrent2Crime = 1000
 
         try:
             quadrent3Crime = table[count - width][0]
         except KeyError:
+            print(KeyError, "three")
             quadrent3Crime = 1000
         
         try:
             quadrent4Crime = table[count-width-1][0]
         except KeyError:
+            print(KeyError)
             quadrent4Crime = 1000
         
-        #true is less (blue)
+        #true is less (purple)
         #false is more (yellow) 
         oneBool = False
         twoBool = False
@@ -356,71 +362,108 @@ def createAdjacency(size,mean,table,width):
 
 
         #diagonals over blue
+        #if its a legal move append to the graph
+        #diagonals
         if(oneBool):
             if(point1 != None):
-                tuple = (point1,1.5)
-                graph[count].append(tuple)
+                newtuple = (point1,1.5)
+                graph[count].append(newtuple)
 
         if(twoBool):
             if(point3 != None):
-                tuple = (point3,1.5)
-                graph[count].append(tuple)
+                newtuple = (point3,1.5)
+                graph[count].append(newtuple)
         
         if(threeBool):
             if(point5 != None):
-                tuple = (point5,1.5)
-                graph[count].append(tuple)
+                newtuple = (point5,1.5)
+                graph[count].append(newtuple)
 
         if(fourBool):
             if(point7 != None):
-                tuple = (point7,1.5)
-                graph[count].append(tuple)
+                newtuple = (point7,1.5)
+                graph[count].append(newtuple)
 
         #Straight ones
         if((oneBool) or (twoBool)):
             if(point2 != None):
                 if((oneBool) and (twoBool)):
-                    tuple = (point2,1.3)
-                    graph[count].append(tuple)
+                    newtuple = (point2,1.3)
+                    graph[count].append(newtuple)
                 else:
-                    tuple = (point2,1)
-                    graph[count].append(tuple)
+                    newtuple = (point2,1)
+                    graph[count].append(newtuple)
         
 
         if((twoBool) or (threeBool)):
             if(point4 != None):
-
                 if((twoBool) and  (threeBool)):
-                    tuple = (point4,1.3)
-                    graph[count].append(tuple)
+                    newtuple = (point4,1.3)
+                    graph[count].append(newtuple)
                 else:
-                    tuple = (point4,1)
-                    graph[count].append(tuple)
+                    newtuple = (point4,1)
+                    graph[count].append(newtuple)
 
         if((threeBool) or (fourBool)):
             if(point6 != None):
-                
                 if((threeBool) and (fourBool)):
-                 tuple = (point6,1.3)
-                 graph[count].append(tuple)
+                 newtuple= (point6,1.3)
+                 graph[count].append(newtuple)
                 else:
-                    tuple = (point6,1)
-                    graph[count].append(tuple)
+                    newtuple = (point6,1)
+                    graph[count].append(newtuple)
 
         if((fourBool) or (oneBool)):
             if(point8 != None):
-                
-                if((oneBool) and  (twoBool)):
-                    tuple = (point8,1.3)
-                    graph[count].append(tuple)
+                if((oneBool) and (twoBool)):
+                    newtuple = (point8,1.3)
+                    graph[count].append(newtuple)
                 else:
-                    tuple = (point8,1)
-                    graph[count].append(tuple)
-        print("COUNT", count)
-        print(graph[count])
+                    newtuple = (point8,1)
+                    graph[count].append(newtuple)
+
+        #trying to fix it
+        # if(count == 10):
+        #     break
         count += 1
+    print("length of table", len(table))
+    print("width", width)
+    print("size", size)
     print(graph)
     return graph
+
+
+#used to check the adjacencies
+def graphAdjaceny(graph):
+    global vertices
+    fig = plt.figure(None, dpi=90)
+    ax = fig.add_subplot(111)
+    axes = plt.gca()
+    axes.set_xlim([-73.59,-73.55])
+    axes.set_ylim([45.49,45.53])
+    ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
+    ax.set_yticks(np.arange(45.49,45.53,blockSize));
+    plt.xticks(rotation=45) 
+
+    count = 0
+    while(count < len(graph)):
+        start = vertices[count]
+        associated = graph[count]
+        innerCount = 0
+        while(innerCount < len(associated)):
+            endNode = associated[innerCount]
+            endNode = endNode[0]
+            end = vertices[endNode]
+            xvalues = [start[0], end[0]]
+            yvalues= [start[1], end[1]]
+            print(xvalues)
+            print(yvalues)
+            plt.plot(xvalues,yvalues)
+            innerCount += 1
+        count += 1
+    plt.show(block = False)
+
+
 
 
 
@@ -428,15 +471,23 @@ def createAdjacency(size,mean,table,width):
 def findVertice(x, y):
     global vertices
     count = 0
+    x = truncateThree(x)
+    y= truncateThree(y)
+
+    print("trunk", x, y)
   
     while(count <len(vertices)):
-        tuple = vertices[count]
-        xSearch = tuple[0]
-        ySearch = tuple[1]
+        outTuple = vertices[count]
+        xSearch = outTuple[0]
+        ySearch = outTuple[1]
         if(x == xSearch) and (y == ySearch):
             return count
         count += 1
     return None
+
+def truncateThree(n, decimals=3):
+    multiplier = 10 ** decimals
+    return int(n * multiplier) / multiplier
 
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
@@ -484,6 +535,7 @@ def estimateNode(x ,y):
 
 
 
+
 ##driver calls
 shpPath = 'Shape/crime_dt.shp'
 #creating global matrix with size of the grid
@@ -492,13 +544,11 @@ shapeRecords = shape.shapeRecords()
 vertices = dict()
 
 
-blockSize = input("enter the size of the blocks (0.003 or 0.002 or 0.001")
+blockSize = input("enter the size of the blocks ")
 blockSize = float(blockSize)
 
 width = 0.04/blockSize
 width = int(width)
-print(width)
-
 
 
 table = getTable(blockSize)
@@ -506,6 +556,7 @@ table = getTable(blockSize)
 inputThreshold = input("enter the threshold percentage")
 inputThreshold = float(inputThreshold)
 mean = getMean(table, inputThreshold)
+#mean = 10000
 print("the mean is " + str(mean))
 
 
@@ -526,6 +577,7 @@ colorplotax = thresholdGraph(blockSize,mean,table)
 
 adjaencyGraph = createAdjacency(blockSize,mean,table,width)
 
+graphAdjaceny(adjaencyGraph)
 
 graph1 = Graph(adjaencyGraph)
 
