@@ -42,9 +42,9 @@ class Graph:
 
 
 
-     # heuristic function with equal values for all nodes
-     # which isnt really calculating anything?
-     # for now just changing to one
+   
+
+    #heuristic currently is finding the length of diagonal
     def h(self, current,goal):
         global vertices
         currentXYTup = vertices[current]
@@ -72,8 +72,7 @@ class Graph:
         open_list = set([start_node])
         closed_list = set()
 
-
-        #g contains currwnt distances from start node to all other nodes
+        #g contains current distances from start node to all other nodes
         #defualt value if its not found in the map is inf
         #curly braces define a dict
         g = {}
@@ -139,15 +138,13 @@ class Graph:
                     g[m] = g[n] + weight
 
             
-                #  else:
-                #      print("else", m)
-                #      if g[m] > g[n] + weight:
-                #       g[m] = g[n] + weight
-                #       parents[m] = n
-
-                #      if m in closed_list:
-                #         closed_list.remove(m)
-                #         open_list.add(m)
+                 elif m in closed_list:
+                     print("else", m)
+                     if g[m] > g[n] + weight:
+                      g[m] = g[n] + weight
+                      parents[m] = n
+                      closed_list.remove(m)
+                      open_list.add(m)
 
 
 
@@ -188,10 +185,14 @@ def getTable(size):
     yCount  =0
     while(yTop <= 45.53):
         while(xTop <= -73.55):
-         xBot = float('%.3f'%(xBot))
-         xTop = float('%.3f'%(xTop))
-         yBot = float('%.3f'%(yBot))
-         yTop = float('%.3f'%(yTop))
+        #  xBot = float('%.3f'%(xBot))
+        #  xTop = float('%.3f'%(xTop))
+        #  yBot = float('%.3f'%(yBot))
+        #  yTop = float('%.3f'%(yTop))
+         xBot = truncate(xBot, 3)
+         xTop = truncate(xTop, 3)
+         yBot = truncate(yBot, 3)
+         yTop = truncate(yTop, 3)
          crime = crimesWithinBounds(xBot,xTop,yBot,yTop)
          info = (crime,xBot, xTop, yBot, yTop)
          table[count] = info
@@ -292,6 +293,8 @@ def createAdjacency(size,mean,table,width):
         x = outTuple[1]
         y = outTuple[3]
 
+        x = truncateThree(x)
+        y = truncateThree(y)
         #I think you can do this
         graph[count] = []
 
@@ -302,14 +305,21 @@ def createAdjacency(size,mean,table,width):
         print("X", x)
         print("Y", y)
        
+        print("One",x-size,y+size )
         point1 = findVertice(x-size,y+size)
+        print("Two",x,y+size )
         point2 = findVertice(x,y+size)
+        print("Three",x+size,y+size )
         point3 = findVertice(x+size,y+size)
-        print("first find",x-size,y+size)
+        print("Four",x+size,y)
         point4 = findVertice(x+size,y)
+        print("Five",x+size,y-size)
         point5 = findVertice(x+size,y-size)
+        print("Six",x,y-size)
         point6 = findVertice(x,y-size)
+        print("Seven",x-size,y-size)
         point7 = findVertice(x-size,y-size)
+        print("Eight",x-size,y)
         point8 = findVertice(x-size,y)
 
         print(point1,point2,point3,point4,point5,point6,point7,point8)
@@ -422,15 +432,17 @@ def createAdjacency(size,mean,table,width):
                     newtuple = (point8,1)
                     graph[count].append(newtuple)
 
-        #trying to fix it
-        # if(count == 10):
-        #     break
+      
         count += 1
     print("length of table", len(table))
     print("width", width)
     print("size", size)
     print(graph)
     return graph
+
+def round_up(n, decimals=0):
+    multiplier = 10 ** decimals
+    return math.ceil(n * multiplier) / multiplier
 
 
 #used to check the adjacencies
@@ -471,6 +483,8 @@ def graphAdjaceny(graph):
 def findVertice(x, y):
     global vertices
     count = 0
+    x = round(x , 3)
+    y = round(y, 3)
     x = truncateThree(x)
     y= truncateThree(y)
 
@@ -480,7 +494,11 @@ def findVertice(x, y):
         outTuple = vertices[count]
         xSearch = outTuple[0]
         ySearch = outTuple[1]
-        if(x == xSearch) and (y == ySearch):
+        xdiff = x - xSearch
+        ydiff = y - ySearch
+        
+
+        if(xdiff >= -0.001 and xdiff <= 0.001) and (ydiff >= -0.001 and ydiff <= 0.001):
             return count
         count += 1
     return None
@@ -556,7 +574,7 @@ table = getTable(blockSize)
 inputThreshold = input("enter the threshold percentage")
 inputThreshold = float(inputThreshold)
 mean = getMean(table, inputThreshold)
-#mean = 10000
+
 print("the mean is " + str(mean))
 
 
@@ -626,19 +644,22 @@ while(endcheck == 0):
     endInt = int(endNode)
 
     path = graph1.a_star_algo(startInt,endInt)
+
     if(path != None):
         print(path)
         x = []
         y = []
+        print(len(path))
 
         finalloop = 0
         while(finalloop < len(path)):
             tup = vertices[path[finalloop]]
+            print(tup)
             x.append(tup[0])
             y.append(tup[1])
             finalloop += 1
-
-
+        print(x)
+        print(y)
         plt.plot(x,y)
 
     plt.show(block = False)
