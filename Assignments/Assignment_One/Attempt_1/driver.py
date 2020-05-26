@@ -16,12 +16,14 @@ import pickle
 from copy import copy
 
 
-def crimesWithinBounds(xBot,xTop,yBot,yTop):
-    global shapeRecords
+
+#this can be optimized
+#maybe a better search
+def crimesWithinBounds(xBot,xTop,yBot,yTop,shapeList):
     count = 0
-    for i in range(len(shapeRecords)):
-        x = shapeRecords[i].shape.__geo_interface__["coordinates"][0]
-        y = shapeRecords[i].shape.__geo_interface__["coordinates"][1]
+    for i in range(len(shapeList)):
+        x = shapeList[i][0]
+        y = shapeList[i][1]
 
         if xBot <= x <= xTop:
            if yBot <= y <= yTop:
@@ -168,6 +170,22 @@ class Graph:
 def getTable(size):
     table = dict()
 
+    ##driver calls
+    shpPath = 'Shape/crime_dt.shp'
+#creating global matrix with size of the grid
+    shape = shapefile.Reader(shpPath, encoding='ISO-8859-1')
+    shapeRecords = shape.shapeRecords()
+
+    shapeList = []
+
+    for i in range(len(shapeRecords)):
+        x = shapeRecords[i].shape.__geo_interface__["coordinates"][0]
+        y = shapeRecords[i].shape.__geo_interface__["coordinates"][1]
+        shapeTuple = (x,y) 
+        shapeList.append(shapeTuple)
+
+   
+
     print("size in table", size)
 
     xBot = -73.59
@@ -193,16 +211,22 @@ def getTable(size):
          xTop = truncate(xTop, 3)
          yBot = truncate(yBot, 3)
          yTop = truncate(yTop, 3)
-         crime = crimesWithinBounds(xBot,xTop,yBot,yTop)
+         crime = crimesWithinBounds(xBot,xTop,yBot,yTop,shapeList)
          info = (crime,xBot, xTop, yBot, yTop)
          table[count] = info
          count += 1
          xBot += size
          xTop += size
+         xBot = round(xBot, 3)
+         xTop = round(xTop, 3)
+         print(count)
         xBot = -73.59
         xTop = -73.59+size
         yBot += size
         yTop += size
+        xTop = round(xTop, 3)
+        yBot = round(yBot, 3)
+        yTop = round(yTop, 3)
         yCount += 1
     return table
 
@@ -482,6 +506,7 @@ def graphAdjaceny(graph):
 ##used to find the node from the vertice count
 def findVertice(x, y):
     global vertices
+    global blockSize
     count = 0
     x = round(x , 3)
     y = round(y, 3)
@@ -489,6 +514,9 @@ def findVertice(x, y):
     y= truncateThree(y)
 
     print("trunk", x, y)
+
+    posrange = blockSize/2
+    negRange = -1*blockSize
   
     while(count <len(vertices)):
         outTuple = vertices[count]
@@ -498,7 +526,7 @@ def findVertice(x, y):
         ydiff = y - ySearch
         
 
-        if(xdiff >= -0.001 and xdiff <= 0.001) and (ydiff >= -0.001 and ydiff <= 0.001):
+        if(xdiff >= negRange and xdiff <= posrange) and (ydiff >= negRange and ydiff <= posrange):
             return count
         count += 1
     return None
@@ -554,11 +582,7 @@ def estimateNode(x ,y):
 
 
 
-##driver calls
-shpPath = 'Shape/crime_dt.shp'
-#creating global matrix with size of the grid
-shape = shapefile.Reader(shpPath, encoding='ISO-8859-1')
-shapeRecords = shape.shapeRecords()
+
 vertices = dict()
 
 
