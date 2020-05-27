@@ -96,8 +96,6 @@ class Graph:
                 if n == None or g[v] + self.h(v,stop_node) < g[n] + self.h(n,stop_node):
                     n = v
 
-            print("Current Node", v)
-
 
 
             ## these are the checks to see if its either not possible
@@ -134,14 +132,13 @@ class Graph:
             #weight stacks it seems
                  if m not in open_list and m not in closed_list:
                      
-                    print("if both", m)
                     open_list.add(m)
                     parents[m] = n
                     g[m] = g[n] + weight
 
             
                  elif m in closed_list:
-                     print("else", m)
+                    
                      if g[m] > g[n] + weight:
                       g[m] = g[n] + weight
                       parents[m] = n
@@ -186,7 +183,7 @@ def getTable(size):
 
    
 
-    print("size in table", size)
+    
 
     xBot = -73.59
     xTop = -73.59+size
@@ -219,7 +216,6 @@ def getTable(size):
          xTop += size
          xBot = round(xBot, 3)
          xTop = round(xTop, 3)
-         print(count)
         xBot = -73.59
         xTop = -73.59+size
         yBot += size
@@ -263,6 +259,12 @@ def thresholdGraph(blockSize,threshold,table):
     yCount = 0
     xylength = int(0.04/blockSize)
 
+    halfBlock = blockSize/2
+
+    midX = []
+    midY = []
+    midCrimes = []
+
 
     while(yCount < xylength):
         while(xCount < xylength):
@@ -272,6 +274,12 @@ def thresholdGraph(blockSize,threshold,table):
          xTop=tup[2]
          yBot=tup[3]
          yTop=tup[4]
+
+         midValueX = xBot +halfBlock
+         midValuey = yBot + halfBlock
+         midX.append(midValueX)
+         midY.append(midValuey)
+         midCrimes.append(crime)
 
 
             #adds a vertice into the dict
@@ -291,11 +299,19 @@ def thresholdGraph(blockSize,threshold,table):
         xCount = 0
         yCount += 1
 
+    title = str(blockSize) + " Graph with " + str(threshold) + " as its Threshold"
     axes = plt.gca()
     axes.set_xlim([-73.59,-73.55])
     axes.set_ylim([45.49,45.53])
     ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
     ax.set_yticks(np.arange(45.49,45.53,blockSize));
+
+    midCrimesCount = 0
+    for a,b in zip(midX, midY): 
+        plt.text(a, b, midCrimes[midCrimesCount])
+        midCrimesCount += 1
+
+    plt.title(title)
     plt.xticks(rotation=45) 
     plt.show(block = False)
     return ax
@@ -325,53 +341,36 @@ def createAdjacency(size,mean,table,width):
         #the one point for quadrents and points is top left
         #goes clockwise
 
-        print("currentNode", count)
-        print("X", x)
-        print("Y", y)
-       
-        print("One",x-size,y+size )
+
         point1 = findVertice(x-size,y+size)
-        print("Two",x,y+size )
         point2 = findVertice(x,y+size)
-        print("Three",x+size,y+size )
         point3 = findVertice(x+size,y+size)
-        print("Four",x+size,y)
         point4 = findVertice(x+size,y)
-        print("Five",x+size,y-size)
         point5 = findVertice(x+size,y-size)
-        print("Six",x,y-size)
         point6 = findVertice(x,y-size)
-        print("Seven",x-size,y-size)
         point7 = findVertice(x-size,y-size)
-        print("Eight",x-size,y)
         point8 = findVertice(x-size,y)
 
-        print(point1,point2,point3,point4,point5,point6,point7,point8)
 
-        #this is me resolving maybe make a better 
-        #data structure
+      
         try:
             quadrent1Crime =  table[count-1][0]
         except KeyError:
-            print(KeyError, "one")
             quadrent1Crime = 1000
         
         try:
             quadrent2Crime =  table[count][0]
         except KeyError:
-            print(KeyError, "two")
             quadrent2Crime = 1000
 
         try:
             quadrent3Crime = table[count - width][0]
         except KeyError:
-            print(KeyError, "three")
             quadrent3Crime = 1000
         
         try:
             quadrent4Crime = table[count-width-1][0]
         except KeyError:
-            print(KeyError)
             quadrent4Crime = 1000
         
         #true is less (purple)
@@ -458,10 +457,7 @@ def createAdjacency(size,mean,table,width):
 
       
         count += 1
-    print("length of table", len(table))
-    print("width", width)
-    print("size", size)
-    print(graph)
+   
     return graph
 
 def round_up(n, decimals=0):
@@ -469,7 +465,11 @@ def round_up(n, decimals=0):
     return math.ceil(n * multiplier) / multiplier
 
 
+
+
 #used to check the adjacencies
+#not needed in the demo
+#just to ensure paths are being properly generated
 def graphAdjaceny(graph):
     global vertices
     fig = plt.figure(None, dpi=90)
@@ -492,8 +492,6 @@ def graphAdjaceny(graph):
             end = vertices[endNode]
             xvalues = [start[0], end[0]]
             yvalues= [start[1], end[1]]
-            print(xvalues)
-            print(yvalues)
             plt.plot(xvalues,yvalues)
             innerCount += 1
         count += 1
@@ -513,7 +511,6 @@ def findVertice(x, y):
     x = truncateThree(x)
     y= truncateThree(y)
 
-    print("trunk", x, y)
 
     posrange = blockSize/2
     negRange = -1*blockSize
@@ -572,7 +569,6 @@ def estimateNode(x ,y):
     outputX = truncate(outputX, 3)
     outputY = truncate(outputY,3)
 
-    print("estimates", outputX,",", outputY)
 
     node = findVertice(outputX,outputY)
     return node
@@ -580,116 +576,122 @@ def estimateNode(x ,y):
 
 
 
+##driver code runs two loops one for setting up the graph 
+##one for putting in the coordiants
+
+newGraph = 0
+
+while newGraph == 0:
+    
+
+    vertices = dict()
+
+
+    blockSize = input("enter the size of the blocks ")
+    blockSize = float(blockSize)
+
+    width = 0.04/blockSize
+    width = int(width)
+
+
+    table = getTable(blockSize)
+
+    inputThreshold = input("enter the threshold percentage")
+    inputThreshold = float(inputThreshold)
+    mean = getMean(table, inputThreshold)
+
+    print("the Threshold Value is " + str(mean))
 
 
 
-vertices = dict()
-
-
-blockSize = input("enter the size of the blocks ")
-blockSize = float(blockSize)
-
-width = 0.04/blockSize
-width = int(width)
-
-
-table = getTable(blockSize)
-
-inputThreshold = input("enter the threshold percentage")
-inputThreshold = float(inputThreshold)
-mean = getMean(table, inputThreshold)
-
-print("the mean is " + str(mean))
+    #need a global list of vertices
+    #and an ajacency list
+    #vertices will be added as a list from the bottom of the blocks
+    #with the bottom being zero
 
 
 
-#need a global list of vertices
-#and an ajacency list
-#vertices will be added as a list from the bottom of the blocks
-#with the bottom being zero
+    globalPolygons = []
+
+    globalPolygonsCopy = []
+    colorplotax = thresholdGraph(blockSize,mean,table)
 
 
 
-globalPolygons = []
-
-globalPolygonsCopy = []
-colorplotax = thresholdGraph(blockSize,mean,table)
+    adjaencyGraph = createAdjacency(blockSize,mean,table,width)
 
 
+    #used for testing
+    #graphAdjaceny(adjaencyGraph)
 
-adjaencyGraph = createAdjacency(blockSize,mean,table,width)
+    graph1 = Graph(adjaencyGraph)
 
-graphAdjaceny(adjaencyGraph)
+    endcheck = 0
+    while(endcheck == 0):
+        globalPolygonsCopy.clear()
 
-graph1 = Graph(adjaencyGraph)
+        polycount = 0
+        while(polycount < len(globalPolygons)):
+            new_patch = copy(globalPolygons[polycount])
+            globalPolygonsCopy.append(new_patch)
+            polycount += 1
 
-endcheck = 0
-while(endcheck == 0):
-    globalPolygonsCopy.clear()
+        fig = plt.figure(None, dpi=90)
+        ax = fig.add_subplot(111)
 
-    polycount = 0
-    while(polycount < len(globalPolygons)):
-        new_patch = copy(globalPolygons[polycount])
-        globalPolygonsCopy.append(new_patch)
-        polycount += 1
+        polycount = 0
+        while(polycount < len(globalPolygons)):
+            ax.add_patch(globalPolygonsCopy[polycount])
+            polycount += 1
 
-    fig = plt.figure(None, dpi=90)
-    ax = fig.add_subplot(111)
+        axes = plt.gca()
+        axes.set_xlim([-73.59,-73.55])
+        axes.set_ylim([45.49,45.53])
+        ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
+        ax.set_yticks(np.arange(45.49,45.53,blockSize));
+        plt.xticks(rotation=45) 
 
-    polycount = 0
-    while(polycount < len(globalPolygons)):
-        ax.add_patch(globalPolygonsCopy[polycount])
-        polycount += 1
+        startX = input("enter the x Coord of Starting Node")
+        startX = float(startX)
+        startY = input("enter the y coord of starting Node")
+        startY = float(startY)
 
-    axes = plt.gca()
-    axes.set_xlim([-73.59,-73.55])
-    axes.set_ylim([45.49,45.53])
-    ax.set_xticks(np.arange(-73.59,-73.55,blockSize));
-    ax.set_yticks(np.arange(45.49,45.53,blockSize));
-    plt.xticks(rotation=45) 
-
-    startX = input("enter the x Coord of Starting Node")
-    startX = float(startX)
-    startY = input("enter the y coord of starting Node")
-    startY = float(startY)
-
-    plt.plot(startX, startY, marker='o', markersize=3, color="black")
-    startNode = estimateNode(startX,startY)
-    startInt = int(startNode)
+        plt.plot(startX, startY, marker='o', markersize=3, color="black")
+        startNode = estimateNode(startX,startY)
+        startInt = int(startNode)
 
 
-    endX = input("enter the x Coord of endNode")
-    endX = float(endX)
-    endY = input("enter the y Coord of end Node")
-    endY = float(endY)
-    plt.plot(endX, endY, marker='o', markersize=3, color="black")
+        endX = input("enter the x Coord of endNode")
+        endX = float(endX)
+        endY = input("enter the y Coord of end Node")
+        endY = float(endY)
+        plt.plot(endX, endY, marker='o', markersize=3, color="black")
 
-    endNode = estimateNode(endX,endY)
-    endInt = int(endNode)
+        endNode = estimateNode(endX,endY)
+        endInt = int(endNode)
 
-    path = graph1.a_star_algo(startInt,endInt)
+        path = graph1.a_star_algo(startInt,endInt)
+        title = "Path from: (" + str(startX) + "," + str(startY) + "," +")" + " to " + "(" + str(endX) + "," + str(endY) + "," +")" 
+        plt.title(title)
 
-    if(path != None):
-        print(path)
-        x = []
-        y = []
-        print(len(path))
+        if(path != None):
+            print(path)
+            x = []
+            y = []
 
-        finalloop = 0
-        while(finalloop < len(path)):
-            tup = vertices[path[finalloop]]
-            print(tup)
-            x.append(tup[0])
-            y.append(tup[1])
-            finalloop += 1
-        print(x)
-        print(y)
-        plt.plot(x,y)
+            finalloop = 0
+            while(finalloop < len(path)):
+                tup = vertices[path[finalloop]]
+                x.append(tup[0])
+                y.append(tup[1])
+                finalloop += 1
+            plt.plot(x,y)
 
-    plt.show(block = False)
 
-    askforStop = input("enter 0 to try another path")
-    endcheck = int(askforStop)
+        plt.show(block = False)
+
+        askforStop = input("enter 0 to try another path or 1 to make a new graph")
+        endcheck = int(askforStop)
 
 
 
