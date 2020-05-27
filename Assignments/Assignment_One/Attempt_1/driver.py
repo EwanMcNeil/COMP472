@@ -1,6 +1,3 @@
-##first attempt at Assignment one 
-##Read in crime_dt.sph
-## it is a shape fi
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -10,15 +7,104 @@ import numpy as np
 from matplotlib import pyplot as plt
 from shapely.geometry.polygon import Polygon
 from descartes import PolygonPatch
-from collections import deque
 import math  
-import pickle
 from copy import copy
 
 
 
-#this can be optimized
-#maybe a better search
+
+##main class for the algoithm
+##used after first the visual has been created with the thresholds 
+##and an adjacency list has been made to be passed to it
+class Graph:
+    def __init__(self,adjacencyList):
+        self.adjacencyList = adjacencyList
+    def getNeighbors(self, v):
+        return self.adjacencyList[v]
+
+
+    #heuristic is bulit upon finding the diagonal length to the end point
+    def h(self, current,goal):
+        global vertices
+        currentXYTup = vertices[current]
+        goalXYTup = vertices[goal]
+        x1 = currentXYTup[0]
+        y1 = currentXYTup[1]
+        x2 = goalXYTup[0]
+        y2 = goalXYTup[1]
+        dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+        return dist
+    
+
+    
+    def Astar(self,startNode,stopNode):
+      
+        openList = set([startNode])
+        closedList = set()
+        g = {}
+        g[startNode] = 0
+
+        #parents contain an adjacency map of all nodes
+        parents = {}
+        parents[startNode] = startNode
+
+        while len(openList) > 0:
+            n = None
+            for v in openList:
+                if n == None or g[v] + self.h(v,stopNode) < g[n] + self.h(n,stopNode):
+                    n = v
+
+
+
+            #if there are no more in the open list the algo is done
+            if n == None:
+                print('Path does not exist!')
+                return None
+            #or if its found the end stop
+            if n ==stopNode:
+                path = []
+
+                while parents[n] != n:
+                    path.append(n)
+                    n = parents[n]
+                
+                path.append(startNode)
+                path.reverse()
+                return path
+
+
+
+            #main search part
+            #goes through neighbors of current node
+            for(m, weight) in self.getNeighbors(n):
+            
+                    #if its an unseen node add to open, and calculate the g[n]
+                    #by adding g[n] to parents g[n]
+                 if m not in openList and m not in closedList:
+                    openList.add(m)
+                    parents[m] = n
+                    g[m] = g[n] + weight
+
+                    #if it has been seen before check if its a shorter path
+                    #if so add it
+                 elif m in closedList:
+                     if g[m] > g[n] + weight:
+                      g[m] = g[n] + weight
+                      parents[m] = n
+                      closedList.remove(m)
+                      openList.add(m)
+
+            openList.remove(n)
+            closedList.add(n)
+
+        print('No path found, please try other nodes')
+        return None
+
+
+
+
+#Sums up all the crimes within a block
 def crimesWithinBounds(xBot,xTop,yBot,yTop,shapeList):
     count = 0
     for i in range(len(shapeList)):
@@ -31,139 +117,13 @@ def crimesWithinBounds(xBot,xTop,yBot,yTop,shapeList):
     return count
 
 
-#trying to build the graph to both display the blocks
-#but also be the basis for the A*
-
-
-
-class Graph:
-    def __init__(self,adjacency_list):
-        self.adjacency_list = adjacency_list
-    def get_neighbors(self, v):
-        return self.adjacency_list[v]
-
-
-
-   
-
-    #heuristic currently is finding the length of diagonal
-    def h(self, current,goal):
-        global vertices
-        currentXYTup = vertices[current]
-        goalXYTup = vertices[goal]
-        x1 = currentXYTup[0]
-        y1 = currentXYTup[1]
-
-
-        x2 = goalXYTup[0]
-        y2 = goalXYTup[1]
-
-        dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-
-        return dist
-    
-
-    
-    def a_star_algo(self,start_node,stop_node):
-        #open_list is a list of nodes that have been visited
-        #but neighbors not
-        #closes list is a list of nodes which have been vistied 
-        #and whos neighbords have been inspected
-
-
-        open_list = set([start_node])
-        closed_list = set()
-
-        #g contains current distances from start node to all other nodes
-        #defualt value if its not found in the map is inf
-        #curly braces define a dict
-        g = {}
-
-        g[start_node] = 0
-
-        #parents contain an adjacency map of all nodes
-
-        parents = {}
-        parents[start_node] = start_node
-
-        while len(open_list) > 0:
-            n = None
-
-            #find the node with the lowest value of f() the evaulation fuction
-            #always sets the first to v thats why the first part is 
-            #and the finds the next best move
-            for v in open_list:
-                if n == None or g[v] + self.h(v,stop_node) < g[n] + self.h(n,stop_node):
-                    n = v
-
-
-
-            ## these are the checks to see if its either not possible
-            ## or if algo is done
-            if n == None:
-                print('Path does not exist!')
-                return None
-
-
-            #if the current node is the ending node
-            # then you take the right path
-            if n ==stop_node:
-                reconst_path = []
-
-                while parents[n] != n:
-                    reconst_path.append(n)
-                    n = parents[n]
-                
-                reconst_path.append(start_node)
-
-                reconst_path.reverse()
-                #print('Path found: {}'.format(reconst_path))
-                return reconst_path
-
-
-
-        
-            #now we have the current node with the lowest value of f()
-            #have to add in the current neighbors
-
-            for(m, weight) in self.get_neighbors(n):
-            #if the current node isnt in open list and closes
-            # we have to add it to the open list and not n as its parent
-            #weight stacks it seems
-                 if m not in open_list and m not in closed_list:
-                     
-                    open_list.add(m)
-                    parents[m] = n
-                    g[m] = g[n] + weight
-
-            
-                 elif m in closed_list:
-                    
-                     if g[m] > g[n] + weight:
-                      g[m] = g[n] + weight
-                      parents[m] = n
-                      closed_list.remove(m)
-                      open_list.add(m)
-
-
-
-             #g(n) is the cost of the path from the start node to n, and h(n) is a heuristic function that estimates the cost of the cheapest path from n to the goal.
-             #now you remove n from the open list and add it to the closes
-             #beacuse all the neighbors were inspected and the g() calculated
-            open_list.remove(n)
-            closed_list.add(n)
-
-        print('Path does not exist!')
-        return None
 
 
 
 
 
-
-
-#size is the multipler so I think as you go along you 
-#add a bit each time
+#get table converts the shapefile into array data
+#and effiecieny 
 def getTable(size):
     table = dict()
 
@@ -181,29 +141,16 @@ def getTable(size):
         shapeTuple = (x,y) 
         shapeList.append(shapeTuple)
 
-   
-
-    
-
     xBot = -73.59
     xTop = -73.59+size
     yBot = 45.49
     yTop = 45.49 +size
 
-    #count gives an index for each box
-    #we start at bottom left here
+  
     count = 0
-    ## this needs to be a two loop with max bounds
-
-
-    ##starts at the bottom goes 
     yCount  =0
     while(yTop <= 45.53):
         while(xTop <= -73.55):
-        #  xBot = float('%.3f'%(xBot))
-        #  xTop = float('%.3f'%(xTop))
-        #  yBot = float('%.3f'%(yBot))
-        #  yTop = float('%.3f'%(yTop))
          xBot = truncate(xBot, 3)
          xTop = truncate(xTop, 3)
          yBot = truncate(yBot, 3)
@@ -227,6 +174,9 @@ def getTable(size):
     return table
 
 
+#finds the threshold value that the assignment asks for 
+#creates an array of all the crime values and sorts by size
+#then takes the value at that percentage
 def getMean(table, threshold):
 
     ##create a new organize list 
@@ -246,7 +196,10 @@ def getMean(table, threshold):
     return median
     
 
-
+#plots out the threshold graph to start
+#uses polygons to fill in the blocks
+#with data created by table
+#a second graph is created for the path
 def thresholdGraph(blockSize,threshold,table):
     
     global globalPolygons
@@ -318,14 +271,15 @@ def thresholdGraph(blockSize,threshold,table):
 
 
 
-#somthing wrong in create Adjancyh its skipping paths it shoundte 
+#the adjacney matrix is created by taking the bottom left node of all the blocks
+#and calcuatining if the eight paths near it are viable paths
+#if they are those edges are appended to that current node
 def createAdjacency(size,mean,table,width):
     global vertices
     graph = dict()
 
     count = 0
    
-    #changing this to exlude the out nodes and calculating just from bottom left perspetive
     while(count< len(table)): 
 
         #find the bottom left vertice
@@ -335,13 +289,11 @@ def createAdjacency(size,mean,table,width):
 
         x = truncateThree(x)
         y = truncateThree(y)
-        #I think you can do this
+       
         graph[count] = []
 
         #the one point for quadrents and points is top left
         #goes clockwise
-
-
         point1 = findVertice(x-size,y+size)
         point2 = findVertice(x,y+size)
         point3 = findVertice(x+size,y+size)
@@ -351,8 +303,6 @@ def createAdjacency(size,mean,table,width):
         point7 = findVertice(x-size,y-size)
         point8 = findVertice(x-size,y)
 
-
-      
         try:
             quadrent1Crime =  table[count-1][0]
         except KeyError:
@@ -460,6 +410,8 @@ def createAdjacency(size,mean,table,width):
    
     return graph
 
+
+
 def round_up(n, decimals=0):
     multiplier = 10 ** decimals
     return math.ceil(n * multiplier) / multiplier
@@ -499,8 +451,6 @@ def graphAdjaceny(graph):
 
 
 
-
-
 ##used to find the node from the vertice count
 def findVertice(x, y):
     global vertices
@@ -528,6 +478,8 @@ def findVertice(x, y):
         count += 1
     return None
 
+
+##these do the same thing take out one
 def truncateThree(n, decimals=3):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
@@ -537,10 +489,11 @@ def truncate(n, decimals=0):
     return int(n * multiplier) / multiplier
 
 
+
+##function used to find the bottom left point that corresponding to 
+##a starting or ending point in the input 
 def estimateNode(x ,y):
-    # -73.59 x origin
-    # 45.49 y origin
-    #just using the global block size varible
+ 
     global blockSize
 
     xcount = 0
@@ -580,13 +533,10 @@ def estimateNode(x ,y):
 ##one for putting in the coordiants
 
 newGraph = 0
-
 while newGraph == 0:
     
 
     vertices = dict()
-
-
     blockSize = input("enter the size of the blocks ")
     blockSize = float(blockSize)
 
@@ -604,16 +554,12 @@ while newGraph == 0:
 
 
 
-    #need a global list of vertices
-    #and an ajacency list
-    #vertices will be added as a list from the bottom of the blocks
-    #with the bottom being zero
-
 
 
     globalPolygons = []
-
     globalPolygonsCopy = []
+
+    
     colorplotax = thresholdGraph(blockSize,mean,table)
 
 
@@ -651,26 +597,22 @@ while newGraph == 0:
         ax.set_yticks(np.arange(45.49,45.53,blockSize));
         plt.xticks(rotation=45) 
 
-        startX = input("enter the x Coord of Starting Node")
-        startX = float(startX)
-        startY = input("enter the y coord of starting Node")
-        startY = float(startY)
+    
+        startX, startY = map(float, input("Please enter start location xcoord ycoord seperated by space ").split());
 
         plt.plot(startX, startY, marker='o', markersize=3, color="black")
         startNode = estimateNode(startX,startY)
         startInt = int(startNode)
 
+      
 
-        endX = input("enter the x Coord of endNode")
-        endX = float(endX)
-        endY = input("enter the y Coord of end Node")
-        endY = float(endY)
+        endX, endY = map(float, input("Please enter end location xcoord ycoord seperated by space ").split());
         plt.plot(endX, endY, marker='o', markersize=3, color="black")
 
         endNode = estimateNode(endX,endY)
         endInt = int(endNode)
 
-        path = graph1.a_star_algo(startInt,endInt)
+        path = graph1.Astar(startInt,endInt)
         title = "Path from: (" + str(startX) + "," + str(startY) + "," +")" + " to " + "(" + str(endX) + "," + str(endY) + "," +")" 
         plt.title(title)
 
