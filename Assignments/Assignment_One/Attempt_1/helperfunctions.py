@@ -1,3 +1,16 @@
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+import shapefile
+from matplotlib import colors
+import numpy as np
+from matplotlib import pyplot as plt
+from shapely.geometry.polygon import Polygon
+from descartes import PolygonPatch
+import math  
+from copy import copy
+import time 
+import globalVar
 
 
 def round_up(n, decimals=0):
@@ -11,7 +24,7 @@ def round_up(n, decimals=0):
 #not needed in the demo
 #just to ensure paths are being properly generated
 def graphAdjaceny(graph):
-    global vertices
+    blockSize = globalVar.blocksize
     fig = plt.figure(None, dpi=90)
     ax = fig.add_subplot(111)
     axes = plt.gca()
@@ -23,13 +36,13 @@ def graphAdjaceny(graph):
 
     count = 0
     while(count < len(graph)):
-        start = vertices[count]
+        start = globalVar.vertices[count]
         associated = graph[count]
         innerCount = 0
         while(innerCount < len(associated)):
             endNode = associated[innerCount]
             endNode = endNode[0]
-            end = vertices[endNode]
+            end = globalVar.vertices[endNode]
             xvalues = [start[0], end[0]]
             yvalues= [start[1], end[1]]
             plt.plot(xvalues,yvalues)
@@ -41,8 +54,8 @@ def graphAdjaceny(graph):
 
 ##used to find the node from the vertice count
 def findVertice(x, y):
-    global vertices
-    global blockSize
+    
+    blockSize = globalVar.blocksize
     count = 0
     x = round(x , 3)
     y = round(y, 3)
@@ -53,8 +66,8 @@ def findVertice(x, y):
     posrange = blockSize/2
     negRange = -1*blockSize
   
-    while(count <len(vertices)):
-        outTuple = vertices[count]
+    while(count <len(globalVar.vertices)):
+        outTuple = globalVar.vertices[count]
         xSearch = outTuple[0]
         ySearch = outTuple[1]
         xdiff = x - xSearch
@@ -82,7 +95,7 @@ def truncate(n, decimals=0):
 ##a starting or ending point in the input 
 def estimateNode(x ,y):
  
-    global blockSize
+    blockSize = globalVar.blocksize
 
     xcount = 0
     xstart = -73.59
