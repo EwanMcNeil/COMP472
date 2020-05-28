@@ -1,3 +1,8 @@
+# -------------------------------------------------------
+# Assignment One
+# Written by Ewan McNeil 40021787
+# For COMP 472 Section JX – Summer 2020
+# --------------------------------------------------------
 
 from setupFunctions import *
 from helperFunctions import *
@@ -30,6 +35,7 @@ class Graph:
     
     def Astar(self,startNode,stopNode):
 
+        print("Starting A* search Algorithm ")
         startTime = time.time()
         openList = set([startNode])
         closedList = set()
@@ -40,6 +46,8 @@ class Graph:
         parents = {}
         parents[startNode] = startNode
 
+
+        #finds the next best path in the open list by adding the g[n] and the h[n]
         while len(openList) > 0:
             n = None
             for v in openList:
@@ -68,7 +76,7 @@ class Graph:
 
 
 
-            #main search part
+            
             #goes through neighbors of current node
             for(m, weight) in self.getNeighbors(n):
             
@@ -88,6 +96,7 @@ class Graph:
                       closedList.remove(m)
                       openList.add(m)
 
+            #its been visited to swap it to the closed list
             openList.remove(n)
             closedList.add(n)
 
@@ -105,11 +114,11 @@ newGraph = 0
 while newGraph == 0:
     
 
+    ##taking in the block size and the threshold percentage
     sizeCheck = False
-
     blockSize = 0
     while not sizeCheck:
-        blockSize = input("enter the size of the blocks: ")
+        blockSize = input("Enter the size of the blocks: ")
         blockSize = float(blockSize)
         print('\n')
         if(blockSize <= 0.01 and blockSize >= 0.001):
@@ -130,7 +139,7 @@ while newGraph == 0:
     thresholdCheck = False
     inputThreshold = 0
     while not thresholdCheck:
-        inputThreshold = input("enter the threshold percentage in decimal format: ")
+        inputThreshold = input("Enter the threshold percentage in decimal format: ")
         inputThreshold = float(inputThreshold)
         print('\n')
         if (inputThreshold < 1 and inputThreshold > 0):
@@ -141,16 +150,16 @@ while newGraph == 0:
 
 
 
-   
+    #calcuatiing the threhold value from the ordered list of crimes
     mean = getMean(table, inputThreshold)
 
     print("the Threshold Value is " + str(mean), '\n')
 
 
     
-    globalPolygonsCopy = []
 
-    
+    ##setup functions for the adjacency and passing the plot
+    globalPolygonsCopy = []
     colorplotax = thresholdGraph(blockSize,mean,table)
     adjaencyGraph = createAdjacency(blockSize,mean,table,width)
 
@@ -159,24 +168,52 @@ while newGraph == 0:
     #graphAdjaceny(adjaencyGraph)
 
 
+    #creating graph from the graph class for the A* 
     graph1 = Graph(adjaencyGraph)
-
 
 
     #loop for the driver 
     endcheck = 0
     while(endcheck == 0):
-        globalPolygonsCopy.clear()
 
+        #polygons can only be displayed once so copying them
+        globalPolygonsCopy.clear()
         polycount = 0
         while(polycount < len(globalVar.globalPolygons)):
             new_patch = copy(globalVar.globalPolygons[polycount])
             globalPolygonsCopy.append(new_patch)
             polycount += 1
 
+       
+
+        #inputs for the start and end coords with checks 
+        startBool = False
+        startX = 0
+        startY = 0
+        while not startBool: 
+            startX, startY = map(float, input("Please enter start location xcoord ycoord seperated by space ").split());
+            startBool = validCoordCheck(startX,startY)
+
+            if startBool == False:
+                print("please enter a valid coords ")
+        
+        endBool = False
+        endX = 0
+        endY = 0
+        while not endBool: 
+            endX, endY = map(float, input("Please enter end location xcoord ycoord seperated by space ").split());
+            endBool = validCoordCheck(endX,endY)
+
+            if endBool == False:
+                print("please enter a valid coords ")
+
+        
+
+        #replotting the graph to display the path
+        plt.close()
         fig = plt.figure(None, dpi=90)
         ax = fig.add_subplot(111)
-
+       
         polycount = 0
         while(polycount < len(globalVar.globalPolygons)):
             ax.add_patch(globalPolygonsCopy[polycount])
@@ -189,44 +226,24 @@ while newGraph == 0:
         ax.set_yticks(np.arange(45.49,45.53,blockSize));
         plt.xticks(rotation=45) 
 
-        startBool = False
-        startX = 0
-        startY = 0
-        while not startBool: 
-            startX, startY = map(float, input("Please enter start location xcoord ycoord seperated by space ").split());
-            startBool = validCoordCheck(startX,startY)
-
-            if startBool == False:
-                print("please enter a valid coords ")
-
 
         plt.plot(startX, startY, marker='o', markersize=3, color="black")
         startNode = estimateNode(startX,startY)
         startInt = int(startNode)
-
-      
-        endX = 0
-        endY = 0
-
-        endBool = False
-        while not endBool: 
-            endX, endY = map(float, input("Please enter end location xcoord ycoord seperated by space ").split());
-            endBool = validCoordCheck(endX,endY)
-
-            if endBool == False:
-                print("please enter a valid coords ")
-
-
         
         plt.plot(endX, endY, marker='o', markersize=3, color="black")
 
         endNode = estimateNode(endX,endY)
         endInt = int(endNode)
 
+
+        #getting the path by passing the nodes found from the input
         path = graph1.Astar(startInt,endInt)
         title = "Path from: (" + str(startX) + "," + str(startY) +")" + " to " + "(" + str(endX) + "," + str(endY)  +")" 
         plt.title(title)
 
+
+        #if path has been found plot it
         if(path != None):
             x = []
             y = []
@@ -243,6 +260,8 @@ while newGraph == 0:
 
         plt.show(block = False)
 
+
+        #after path display ask for next step from the user
         stopBool = False
         while not stopBool:
             askforStop = input("enter 0 to try another path or 1 to make a new graph: ")

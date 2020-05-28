@@ -1,3 +1,8 @@
+# -------------------------------------------------------
+# Assignment One
+# Written by Ewan McNeil 40021787
+# For COMP 472 Section JX – Summer 2020
+# --------------------------------------------------------
 
 from helperFunctions import *
 import globalVar
@@ -18,6 +23,7 @@ def crimesWithinBounds(xBot,xTop,yBot,yTop,shapeList):
 #get table converts the shapefile into array data
 #and effiecieny 
 def getTable(size):
+    print("Collecting data from shapefile, may take a few seconds")
     table = dict()
 
     ##driver calls
@@ -168,7 +174,7 @@ def thresholdGraph(blockSize,threshold,table):
 #and calcuatining if the eight paths near it are viable paths
 #if they are those edges are appended to that current node
 def createAdjacency(size,mean,table,width):
-    
+    print("Preforming setup, may take a few seconds")
     graph = dict()
 
     count = 0

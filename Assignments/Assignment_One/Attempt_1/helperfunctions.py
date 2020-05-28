@@ -1,9 +1,12 @@
+# -------------------------------------------------------
+# Assignment One
+# Written by Ewan McNeil 40021787
+# For COMP 472 Section JX – Summer 2020
+# --------------------------------------------------------
+
 import numpy as np
-import pandas as pd
-import geopandas as gpd
 import shapefile
 from matplotlib import colors
-import numpy as np
 from matplotlib import pyplot as plt
 from shapely.geometry.polygon import Polygon
 from descartes import PolygonPatch
@@ -11,6 +14,10 @@ import math
 from copy import copy
 import time 
 import globalVar
+
+
+##helper functions deal with smaller calcuations and checks
+#also have the imports here
 
 
 def round_up(n, decimals=0):
@@ -93,6 +100,7 @@ def truncate(n, decimals=0):
 
 ##function used to find the bottom left point that corresponding to 
 ##a starting or ending point in the input 
+#because the nodes in the graph arent done by coordiante they are labeled by an int
 def estimateNode(x ,y):
  
     blockSize = globalVar.blocksize
