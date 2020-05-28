@@ -9,7 +9,7 @@ from shapely.geometry.polygon import Polygon
 from descartes import PolygonPatch
 import math  
 from copy import copy
-
+import time 
 
 
 
@@ -39,7 +39,8 @@ class Graph:
 
     
     def Astar(self,startNode,stopNode):
-      
+
+        startTime = time.time()
         openList = set([startNode])
         closedList = set()
         g = {}
@@ -59,10 +60,12 @@ class Graph:
 
             #if there are no more in the open list the algo is done
             if n == None:
-                print('Path does not exist!')
+                print('Path does not exist!', '\n')
                 return None
             #or if its found the end stop
             if n ==stopNode:
+                endTime = time.time() - startTime;
+                print("Path found, time taken is: "+ str(endTime), '\n')
                 path = []
 
                 while parents[n] != n:
@@ -98,7 +101,8 @@ class Graph:
             openList.remove(n)
             closedList.add(n)
 
-        print('No path found, please try other nodes')
+        print('No path found, please try other nodes', '\n')
+    
         return None
 
 
@@ -537,7 +541,8 @@ while newGraph == 0:
     
 
     vertices = dict()
-    blockSize = input("enter the size of the blocks ")
+    blockSize = input("enter the size of the blocks: ")
+    print('\n')
     blockSize = float(blockSize)
 
     width = 0.04/blockSize
@@ -546,14 +551,12 @@ while newGraph == 0:
 
     table = getTable(blockSize)
 
-    inputThreshold = input("enter the threshold percentage")
+    inputThreshold = input("enter the threshold percentage: ")
+    print('\n')
     inputThreshold = float(inputThreshold)
     mean = getMean(table, inputThreshold)
 
-    print("the Threshold Value is " + str(mean))
-
-
-
+    print("the Threshold Value is " + str(mean), '\n')
 
 
     globalPolygons = []
@@ -561,17 +564,18 @@ while newGraph == 0:
 
     
     colorplotax = thresholdGraph(blockSize,mean,table)
-
-
-
     adjaencyGraph = createAdjacency(blockSize,mean,table,width)
 
 
     #used for testing
     #graphAdjaceny(adjaencyGraph)
 
+
     graph1 = Graph(adjaencyGraph)
 
+
+
+    #loop for the driver 
     endcheck = 0
     while(endcheck == 0):
         globalPolygonsCopy.clear()
@@ -617,7 +621,6 @@ while newGraph == 0:
         plt.title(title)
 
         if(path != None):
-            print(path)
             x = []
             y = []
 
@@ -633,6 +636,7 @@ while newGraph == 0:
         plt.show(block = False)
 
         askforStop = input("enter 0 to try another path or 1 to make a new graph")
+        print('\n')
         endcheck = int(askforStop)
 
 
