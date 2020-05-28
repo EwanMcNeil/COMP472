@@ -531,6 +531,22 @@ def estimateNode(x ,y):
     return node
 
 
+def validCoordCheck(x , y):
+    outputBool = False
+    xBool = False
+    yBool = False
+
+    if((x >= -73.59) and (x <= -73.55)):
+        xBool = True
+
+    if((y >= 45.49) and (y <= 45.53)):
+        yBool =True
+    
+    if xBool and yBool:
+        outputBool = True
+    
+    return outputBool
+
 
 
 ##driver code runs two loops one for setting up the graph 
@@ -541,9 +557,21 @@ while newGraph == 0:
     
 
     vertices = dict()
-    blockSize = input("enter the size of the blocks: ")
-    print('\n')
-    blockSize = float(blockSize)
+    sizeCheck = False
+
+    blockSize = 0
+    while not sizeCheck:
+        blockSize = input("enter the size of the blocks: ")
+        blockSize = float(blockSize)
+        print('\n')
+        if(blockSize <= 0.01 and blockSize >= 0.001):
+            sizeCheck = True
+        else:
+            print("Please enter a valid block size between 0.001 and 0.01")
+
+
+
+   
 
     width = 0.04/blockSize
     width = int(width)
@@ -551,9 +579,21 @@ while newGraph == 0:
 
     table = getTable(blockSize)
 
-    inputThreshold = input("enter the threshold percentage: ")
-    print('\n')
-    inputThreshold = float(inputThreshold)
+    thresholdCheck = False
+    inputThreshold = 0
+    while not thresholdCheck:
+        inputThreshold = input("enter the threshold percentage in decimal format: ")
+        inputThreshold = float(inputThreshold)
+        print('\n')
+        if (inputThreshold < 1 and inputThreshold > 0):
+            thresholdCheck = True
+        else: 
+            print("invalid percentage please reenter")
+
+
+
+
+   
     mean = getMean(table, inputThreshold)
 
     print("the Threshold Value is " + str(mean), '\n')
@@ -601,23 +641,42 @@ while newGraph == 0:
         ax.set_yticks(np.arange(45.49,45.53,blockSize));
         plt.xticks(rotation=45) 
 
-    
-        startX, startY = map(float, input("Please enter start location xcoord ycoord seperated by space ").split());
+        startBool = False
+        startX = 0
+        startY = 0
+        while not startBool: 
+            startX, startY = map(float, input("Please enter start location xcoord ycoord seperated by space ").split());
+            startBool = validCoordCheck(startX,startY)
+
+            if startBool == False:
+                print("please enter a valid coords ")
+
 
         plt.plot(startX, startY, marker='o', markersize=3, color="black")
         startNode = estimateNode(startX,startY)
         startInt = int(startNode)
 
       
+        endX = 0
+        endY = 0
 
-        endX, endY = map(float, input("Please enter end location xcoord ycoord seperated by space ").split());
+        endBool = False
+        while not endBool: 
+            endX, endY = map(float, input("Please enter end location xcoord ycoord seperated by space ").split());
+            endBool = validCoordCheck(endX,endY)
+
+            if endBool == False:
+                print("please enter a valid coords ")
+
+
+        
         plt.plot(endX, endY, marker='o', markersize=3, color="black")
 
         endNode = estimateNode(endX,endY)
         endInt = int(endNode)
 
         path = graph1.Astar(startInt,endInt)
-        title = "Path from: (" + str(startX) + "," + str(startY) + "," +")" + " to " + "(" + str(endX) + "," + str(endY) + "," +")" 
+        title = "Path from: (" + str(startX) + "," + str(startY) +")" + " to " + "(" + str(endX) + "," + str(endY)  +")" 
         plt.title(title)
 
         if(path != None):
@@ -631,11 +690,12 @@ while newGraph == 0:
                 y.append(tup[1])
                 finalloop += 1
             plt.plot(x,y)
+            
 
 
         plt.show(block = False)
 
-        askforStop = input("enter 0 to try another path or 1 to make a new graph")
+        askforStop = input("enter 0 to try another path or 1 to make a new graph: ")
         print('\n')
         endcheck = int(askforStop)
 
