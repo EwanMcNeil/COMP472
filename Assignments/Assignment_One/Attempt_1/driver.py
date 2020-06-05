@@ -61,7 +61,7 @@ class Graph:
                 print('Path does not exist!', '\n')
                 return None
             #or if its found the end stop
-            if n ==stopNode:
+            if n == stopNode:
                 endTime = time.time() - startTime;
                 print("Path found, time taken is: "+ str(endTime), '\n')
                 path = []
