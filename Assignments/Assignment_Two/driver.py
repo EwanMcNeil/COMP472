@@ -38,19 +38,19 @@ def addtoDict(word, postType):
     index = 0
     
     #index of the current type
-    if(postType == 'story'):
+    if(postType is 'story'):
         storyCount += 1
         index = 0
         
-    if(postType == 'ask_hn'):
+    if(postType is 'ask_hn'):
         askCount += 1
         index = 2
         
-    if(postType == 'show_hn'):
+    if(postType is 'show_hn'):
         showCount += 1
         index = 4
         
-    if(postType == 'poll'):
+    if(postType is 'poll'):
         pollCount += 1
         index = 6
     
@@ -86,15 +86,30 @@ with open('hns_2018_2019.csv',encoding='utf-8') as csv_file:
             print(f'Column names are {", ".join(row)}')
             line_count += 1
         else:
+
            
             postType = row[3]
             title = row[2]
-            wordList = re.sub("[^\S]", " ",  title).split()
+
+            res = "".join(filter(lambda x: not x.isdigit(), title)) 
+            string = str(res)
+            wordList = re.sub("[, \!?:]+", " ", string).split()
+
+            wordOutputList = []
             for word in wordList:
-                word = word.lower()
+                res = re.sub(r'\W+', ' ', word)
+
+                if(str(res) != " "):
+                    word = str(res)
+                    word = word.lower()
+                    wor = word.strip()
+                    wordOutputList.append(word)
+
+            for word in wordOutputList:
                 addtoDict(word, postType)
             
             line_count += 1
+
     print(f'Processed {line_count} lines.')
     print("story count", storyCount)
     print("ask count", askCount)
@@ -115,10 +130,10 @@ for key in wordDictionary:
 
     valueList = wordDictionary.get(key)
   
-    storyPercent = (valueList[0]+0.5)/(storyCount+smoothingFactor)
-    askPercent = (valueList[2]+0.5)/(askCount+smoothingFactor)
-    showPercent = (valueList[4]+0.5)/(showCount +smoothingFactor)
-    pollPercent = (valueList[6]+0.5)/(pollCount+smoothingFactor)
+    storyPercent = ((valueList[0]+0.5)/(storyCount+smoothingFactor))
+    askPercent = ((valueList[2]+0.5)/(askCount+smoothingFactor))
+    showPercent = ((valueList[4]+0.5)/(showCount +smoothingFactor))
+    pollPercent = ((valueList[6]+0.5)/(pollCount+smoothingFactor))
 
     valueList[1] = storyPercent
     valueList[3] = askPercent
@@ -130,10 +145,35 @@ for key in wordDictionary:
 check = wordDictionary.get("how")
 print("check",check)
 
-# for key in wordDictionary:
-#     valueList = wordDictionary.get(key)
-#     print(key, valueList)
-#     print('/n')
+
+#sorting a list for the output file
+sortedkeys = []
+for key in wordDictionary:
+    sortedkeys.append(key)
+
+sortedkeys.sort()
+
+f = open("model-2018.txt", "w")
+i = 0
+for key in sortedkeys:
+    
+    stringtoWrite = str(i) + " " + key + " "
+    outputFromDict = wordDictionary.get(key)
+    for value in outputFromDict:
+        stringtoWrite = stringtoWrite + " " + str(value)
+    print(stringtoWrite)
+    try:
+        f.write(stringtoWrite)
+    except UnicodeEncodeError:
+        print("errror skipping")
+        # stringtoWrite = stringtoWrite.encode().decode("utf-8")
+        # f.write(stringtoWrite)
+    f.write('\n')
+    i += 1
+f.close()
+
+    
+
 
 
 
