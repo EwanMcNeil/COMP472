@@ -27,10 +27,7 @@ import math
 ##functions
 def addtoDict(word, postType, Experiment):
     
-    global storyCount
-    global askCount
-    global showCount 
-    global pollCount 
+    global labelDictionary
     global stopWordList
     global stopWordDictionary
     global baselineDictionary
@@ -41,23 +38,32 @@ def addtoDict(word, postType, Experiment):
         if (word in stopWordList):
            return
     
-    #index of the current type
-    if(postType == 'story'):
-        print("story")
-        storyCount += 1
-        index = 0
+    for key in labelDictionary:
+        if key == postType:
+            data = labelDictionary.get(key)
+            data[0] = data[0] + 1
+            index = data[1]
+            labelDictionary[key] = data
+
+    # #index of the current type
+    # if(postType == 'story'):
+    #     print("story")
+    #     storyCount += 1
+    #     index = 0
         
-    if(postType == 'ask_hn'):
-        askCount += 1
-        index = 2
+    # if(postType == 'ask_hn'):
+    #     askCount += 1
+    #     index = 2
         
-    if(postType == 'show_hn'):
-        showCount += 1
-        index = 4
+    # if(postType == 'show_hn'):
+    #     showCount += 1
+    #     index = 4
         
-    if(postType == 'poll'):
-        pollCount += 1
-        index = 6
+    # if(postType == 'poll'):
+    #     pollCount += 1
+    #     index = 6
+
+
     
     try:
         if(Experiment == 1):
@@ -66,16 +72,25 @@ def addtoDict(word, postType, Experiment):
         else:
             valueList = baselineDictionary.get(word)
     except KeyError:
-        valueList = [0,0,0,0,0,0,0,0]
+        valueList = [0] * len(labelDictionary) * 2
         #do nothing if its not been created we use default tup
     
     if(valueList == None):
-        valueList = [0,0,0,0,0,0,0,0]
+        valueList = [0] * len(labelDictionary) * 2
     
-    wordValue = valueList[index]
-    wordValue += 1
 
-    valueList[index] = wordValue
+    #here there might be an issue 
+    #need to loop to indcrease the list size 
+    boolIndexError = True
+    while boolIndexError:
+        try:
+            wordValue = valueList[index]
+            wordValue += 1
+            valueList[index] = wordValue
+            boolIndexError = False 
+        except IndexError:
+            valueList.append(0)
+            valueList.append(0)
 
     if(Experiment == 1):
         stopWordDictionary[word] = valueList
@@ -92,9 +107,11 @@ def addtoDict(word, postType, Experiment):
 ##reading in the file
 
 def readInFile(Experiment):
+    global labelDictionary
     with open('hns_2018_2019.csv',encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
+        typeCount = 0
         for row in csv_reader:
             year = row[9]
             
@@ -104,8 +121,14 @@ def readInFile(Experiment):
                 line_count += 1
             else:
 
-            
+                
                 postType = row[3]
+                #here checking for value
+                if not (postType in labelDictionary):
+                    labelDictionary[postType] = [0, typeCount]
+                    typeCount += 2
+
+
                 title = row[2]
 
                 res = "".join(filter(lambda x: not x.isdigit(), title)) 
@@ -132,6 +155,8 @@ def readInFile(Experiment):
                     testingList.append(listTuple)
                 
                 line_count += 1
+        
+        
 
         print(f'Processed {line_count} lines.')
 
@@ -143,35 +168,47 @@ def readInFile(Experiment):
 def smoothingData(inputDictionary):
     #creating the percentages 
    
-    global storyCount
-    global askCount
-    global showCount
-    global pollCount
+    # global storyCount
+    # global askCount
+    # global showCount
+    # global pollCount
+
+    global labelDictionary
     smoothingFactor = len(inputDictionary)*0.5
 
+    outputDictionary = inputDictionary.copy()
 
     # Key: freq story, % story, freq ask_hn, % ask Hn, freq show_hn, % show_hn, freq poll, % poll 
     for key in inputDictionary:
 
         valueList = inputDictionary.get(key)
     
-        storyPercent = ((valueList[0]+0.5)/(storyCount+smoothingFactor))
-        askPercent = ((valueList[2]+0.5)/(askCount+smoothingFactor))
-        showPercent = ((valueList[4]+0.5)/(showCount +smoothingFactor))
-        pollPercent = ((valueList[6]+0.5)/(pollCount+smoothingFactor))
+        # storyPercent = ((valueList[0]+0.5)/(storyCount+smoothingFactor))
+        # askPercent = ((valueList[2]+0.5)/(askCount+smoothingFactor))
+        # showPercent = ((valueList[4]+0.5)/(showCount +smoothingFactor))
+        # pollPercent = ((valueList[6]+0.5)/(pollCount+smoothingFactor))
 
-        valueList[1] = storyPercent
-        valueList[3] = askPercent
-        valueList[5] = showPercent
-        valueList[7]= pollPercent
+        # valueList[1] = storyPercent
+        # valueList[3] = askPercent
+        # valueList[5] = showPercent
+        # valueList[7]= pollPercent
 
-        inputDictionary[key] = valueList
+        while len(valueList) < (len(labelDictionary)*2):
+            valueList.append(0)
 
-    return inputDictionary
+        print("val",valueList)
 
+        for key in labelDictionary:
+            data = labelDictionary.get(key)
+            print("data", data)
+            addition = float((valueList[data[1]]+0.5))
+            smoothAddition = float((data[0]+smoothingFactor))
+            percent =  addition/smoothAddition
+            valueList[data[1]+1] = percent
 
+        outputDictionary[key] = valueList
 
-
+    return outputDictionary
 
     #sorting a list for the output file
 
@@ -245,29 +282,52 @@ def stopWordOutput():
 ##take in array of words and calculate it
 ##want to return the classifcation and the score of each
 def naiveBays(sentance, integer):
-    storyScore = 0
-    askScore = 0
-    showScore = 0
-    pollScore = 0
+    ## need to make local dictionary here
+    global labelDictionary
+
+    scoreDictionary = dict()
+
+    for key in labelDictionary:
+        scoreDictionary[key] = 0
+    # storyScore = 0
+    # askScore = 0
+    # showScore = 0
+    # pollScore = 0
     global baselineDictionary
     global stopWordDictionary
 
     for word in sentance:
         if integer == 0:
-            data = baselineDictionary.get(word)
+            if word in baselineDictionary:
+             data = baselineDictionary.get(word)
+            else:
+             data = None 
         if integer == 1:
-            data = stopWordDictionary.get(word)
+            if word in stopWordDictionary:
+             data = stopWordDictionary.get(word)
+            else:
+             data = None 
         if(data != None):
-            storyScore += math.log10(float(data[1]))
-            askScore += math.log10(float(data[3]))
-            showScore += math.log10(float(data[5]))
-            pollScore += math.log10(float(data[7]))
+            for key in scoreDictionary:
+                labelInfo = labelDictionary.get(key)
+                currentScore = scoreDictionary.get(key)
+                currentScore += math.log10((data[labelInfo[1]+1]))
+                scoreDictionary[key] = currentScore
+                
+            # storyScore += math.log10(float(data[1]))
+            # askScore += math.log10(float(data[3]))
+            # showScore += math.log10(float(data[5]))
+            # pollScore += math.log10(float(data[7]))
 
-    values = {'story': storyScore, 'ask_hn': askScore, 'show_hn': showScore, 'poll': pollScore}
+    # values = {'story': storyScore, 'ask_hn': askScore, 'show_hn': showScore, 'poll': pollScore}
 
-    classifcation = max(values, key=values.get)
+    classifcation = max(scoreDictionary, key=scoreDictionary.get)
 
-    outputList = (classifcation,storyScore,askScore,showScore,pollScore)
+    outputList = [classifcation]
+    for key in scoreDictionary:
+        value = scoreDictionary.get(key)
+        outputList.append(key)
+        outputList.append(value)
 
     return outputList
 
@@ -296,14 +356,22 @@ def ChecktestingData(integer):
 
         classified = str(outputList[0])
         acutally = str(postType)
-
-        stringtoWrite = str(i) + " " + "classified as: " + classified +  " Acutally " + acutally + " scores: " + str(outputList[1]) + " " + str(outputList[2]) +  " " + str(outputList[3])+  " " + str(outputList[4])
+        correctingString = " wrong"
 
         if classified == acutally:
+            correctingString = " right "
             correct +=1
         else:
             wrong += 1
-    
+
+        stringtoWrite = str(i) + " " + "classified as: " + classified +  " Acutally " + acutally + " scores: "
+        
+        outputindex = 1
+        while outputindex < len(outputList):
+            stringtoWrite += " " + str(outputList[outputindex])
+            outputindex += 1
+
+        stringtoWrite += correctingString
         try:
             f.write(stringtoWrite)
         except UnicodeEncodeError:
@@ -325,10 +393,15 @@ def ChecktestingData(integer):
 ##global variables
 baselineDictionary = dict()
 testingList = []
-storyCount = 0
-askCount = 0
-showCount = 0
-pollCount = 0
+# storyCount = 0
+# askCount = 0
+# showCount = 0
+# pollCount = 0
+
+labelDictionary = dict()
+#uses labels as keys and then counts as values
+
+#need to refactor to a dict
 
 
 
@@ -350,6 +423,9 @@ stopWordDictionary = dict()
 stopWordList = []
 
 ##reseting the counter
+##needs to occur for the stop as well
+labelDictionary.clear()
+
 storyCount = 0
 askCount = 0
 showCount = 0
