@@ -19,7 +19,7 @@ import csv
 import re
 import string
 import math
-
+import nltk
 
 
 
@@ -115,7 +115,6 @@ def readInFile(Experiment):
         for row in csv_reader:
             year = row[9]
             
-            print("firstif")
             if line_count == 0:
                 print(f'Column names are {", ".join(row)}')
                 line_count += 1
@@ -131,24 +130,32 @@ def readInFile(Experiment):
 
                 title = row[2]
 
-                res = "".join(filter(lambda x: not x.isdigit(), title)) 
-                string = str(res)
-                wordList = re.sub("[, \!?:]+", " ", string).split()
+                # res = "".join(filter(lambda x: not x.isdigit(), title)) 
+                # string = str(res)
+                # wordList = re.sub("[, \!?:]+", " ", string).split()
 
-                wordOutputList = []
-                for word in wordList:
-                    res = re.sub(r'\W+', ' ', word)
+                # wordOutputList = []
+                # for word in wordList:
+                #     res = re.sub(r'\W+', ' ', word)
 
-                    if(str(res) != " "):
-                        word = str(res)
-                        word = word.lower()
-                        word = word.strip()
-                        wordOutputList.append(word)
+                #     if(str(res) != " "):
+                #         word = str(res)
+                #         word = word.lower()
+                #         word = word.strip()
+                #         wordOutputList.append(word)
+
+                words = nltk.word_tokenize(title)
+                wordOutputList = [word for word in words if word.isalnum()]
+                i = 0 
+                for word in wordOutputList:
+                    wordOutputList[i] = (word.lower()).strip()
+                    if(any(char.isdigit() for char in word)):
+                       del wordOutputList[i]
+                    i += 1
 
                 if(year == '2018'):
                     for word in wordOutputList:
-                        print("into")
-                        addtoDict(word, postType,Experiment)
+                            addtoDict(word, postType,Experiment)
                 
                 if(year == '2019' and Experiment == 0):
                     listTuple = [wordOutputList, postType]
@@ -163,9 +170,34 @@ def readInFile(Experiment):
 
 
 
-
-
 def smoothingData(inputDictionary):
+
+    global labelDictionary
+
+    # i = 0
+    # ##removing the less useful data
+    # for key in inputDictionary:
+    #     valueList = inputDictionary.get(key
+
+
+    #     #if I remove this later remeber to keep this part
+        
+
+     
+
+    #     total = 0
+    #     for key in labelDictionary:
+    #         data = labelDictionary.get(key)
+    #         total += valueList[data[1]]
+        
+    #     if total <= 1:
+    #         del inputDictionary[i]
+            
+    #     i += 1
+
+
+
+
     #creating the percentages 
    
     # global storyCount
@@ -173,8 +205,8 @@ def smoothingData(inputDictionary):
     # global showCount
     # global pollCount
 
-    global labelDictionary
-    smoothingFactor = len(inputDictionary)*0.5
+    
+    smoothingFactor = len(inputDictionary)*0.1
 
     outputDictionary = inputDictionary.copy()
 
@@ -193,15 +225,14 @@ def smoothingData(inputDictionary):
         # valueList[5] = showPercent
         # valueList[7]= pollPercent
 
+        ##to account for unseen zeros
         while len(valueList) < (len(labelDictionary)*2):
             valueList.append(0)
 
-        print("val",valueList)
 
         for key in labelDictionary:
             data = labelDictionary.get(key)
-            print("data", data)
-            addition = float((valueList[data[1]]+0.5))
+            addition = float((valueList[data[1]]+0.1))
             smoothAddition = float((data[0]+smoothingFactor))
             percent =  addition/smoothAddition
             valueList[data[1]+1] = percent
@@ -284,6 +315,8 @@ def stopWordOutput():
 def naiveBays(sentance, integer):
     ## need to make local dictionary here
     global labelDictionary
+
+    print(sentance)
 
     scoreDictionary = dict()
 
@@ -434,13 +467,21 @@ pollCount = 0
 f = open("stopwords.txt", "r")
 
 for x in f:
-    string = str(x)
-    word = re.sub("[, \!?:]+", " ", string)
-    res = re.sub(r'\W+', ' ', word)
-    if(str(res) != " "):
-        word = str(res)
-        word = word.lower()
-        word = word.strip()
+    # string = str(x)
+    # word = re.sub("[, \!?:]+", " ", string)
+    # res = re.sub(r'\W+', ' ', word)
+    # if(str(res) != " "):
+    #     word = str(res)
+    #     word = word.lower()
+    #     word = word.strip()
+    #     stopWordList.append(word)
+    words = nltk.word_tokenize(x)
+    new_words= [word for word in words if word.isalnum()]
+    i = 0 
+    for word in new_words:
+        new_words[i] = (word.lower()).strip()
+        i += 1
+    for word in new_words:
         stopWordList.append(word)
 
 
