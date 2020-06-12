@@ -21,7 +21,7 @@ import string
 import math
 import nltk
 
-
+nltk.download('punkt')
 
 
 ##functions
@@ -32,6 +32,14 @@ def addtoDict(word, postType, Experiment):
     global stopWordDictionary
     global baselineDictionary
     index = 0
+
+    if(Experiment == 2):
+        wordLength = len(word)
+        if(wordLength <= 2 ):
+            return
+        if(wordLength >= 9 ):
+            return
+
 
     if(Experiment == 1):
         ##indicating its the stop one
@@ -66,11 +74,14 @@ def addtoDict(word, postType, Experiment):
 
     
     try:
+        if(Experiment == 0):
+            valueList = baselineDictionary.get(word)
+        ##indicating its the stop one
         if(Experiment == 1):
             valueList = stopWordDictionary.get(word)
-        ##indicating its the stop one
-        else:
-            valueList = baselineDictionary.get(word)
+        if(Experiment == 2):
+            valueList = sizeDictionary.get(word)
+          
     except KeyError:
         valueList = [0] * len(labelDictionary) * 2
         #do nothing if its not been created we use default tup
@@ -92,11 +103,15 @@ def addtoDict(word, postType, Experiment):
             valueList.append(0)
             valueList.append(0)
 
+    if(Experiment == 0):
+        baselineDictionary[word] = valueList
+        ##indicating its the stop one
     if(Experiment == 1):
         stopWordDictionary[word] = valueList
-        ##indicating its the stop one
-    else:
-        baselineDictionary[word] = valueList
+    if(Experiment == 2):
+        sizeDictionary[word] = valueList
+
+
     
     
 
@@ -108,6 +123,7 @@ def addtoDict(word, postType, Experiment):
 
 def readInFile(Experiment):
     global labelDictionary
+    
     with open('hns_2018_2019.csv',encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -124,8 +140,14 @@ def readInFile(Experiment):
                 postType = row[3]
                 #here checking for value
                 if not (postType in labelDictionary):
-                    labelDictionary[postType] = [0, typeCount]
+                    ##labelDictionary counts number of words associated, index of the words, number of articals with that one
+                    labelDictionary[postType] = [0, typeCount, 0]
                     typeCount += 2
+
+                #here we are adding in the percent of 
+                addData = labelDictionary[postType]
+                addData[2] = addData[2] + 1
+                labelDictionary[postType] = addData
 
 
                 title = row[2]
@@ -163,7 +185,10 @@ def readInFile(Experiment):
                 
                 line_count += 1
         
-        
+        for key in labelDictionary:
+            DivData = labelDictionary[key]
+            DivData[2] = DivData[2]/line_count
+            labelDictionary[key] = DivData
 
         print(f'Processed {line_count} lines.')
 
@@ -206,7 +231,7 @@ def smoothingData(inputDictionary):
     # global pollCount
 
     
-    smoothingFactor = len(inputDictionary)*0.1
+    smoothingFactor = len(inputDictionary)*0.5
 
     outputDictionary = inputDictionary.copy()
 
@@ -232,7 +257,7 @@ def smoothingData(inputDictionary):
 
         for key in labelDictionary:
             data = labelDictionary.get(key)
-            addition = float((valueList[data[1]]+0.1))
+            addition = float((valueList[data[1]]+0.5))
             smoothAddition = float((data[0]+smoothingFactor))
             percent =  addition/smoothAddition
             valueList[data[1]+1] = percent
@@ -303,6 +328,35 @@ def stopWordOutput():
 
 
 
+def sizeWordOutput():
+    global sizeDictionary
+    sortedkeys = []
+    for key in sizeDictionary:
+        sortedkeys.append(key)
+
+    sortedkeys.sort()
+
+    f = open("size-model.txt", "w")
+    f.truncate(0)
+    i = 0
+    for key in sortedkeys:
+        
+        stringtoWrite = str(i) + " " + key + " "
+        outputFromDict = sizeDictionary.get(key)
+        for value in outputFromDict:
+            stringtoWrite = stringtoWrite + " " + str(value)
+        #print(stringtoWrite)
+        try:
+            f.write(stringtoWrite)
+        except UnicodeEncodeError:
+            print("errror skipping")
+            # stringtoWrite = stringtoWrite.encode().decode("utf-8")
+            # f.write(stringtoWrite)
+        f.write('\n')
+        i += 1
+    f.close()
+
+
 #dictary is setup as
 # Key: freq story, % story, freq ask_hn, % ask Hn, freq show_hn, % show_hn, freq poll, % poll  
 
@@ -316,12 +370,13 @@ def naiveBays(sentance, integer):
     ## need to make local dictionary here
     global labelDictionary
 
-    print(sentance)
+   
 
     scoreDictionary = dict()
 
     for key in labelDictionary:
-        scoreDictionary[key] = 0
+        percentdata = labelDictionary[key]
+        scoreDictionary[key] = math.log10(percentdata[2])
     # storyScore = 0
     # askScore = 0
     # showScore = 0
@@ -338,6 +393,11 @@ def naiveBays(sentance, integer):
         if integer == 1:
             if word in stopWordDictionary:
              data = stopWordDictionary.get(word)
+            else:
+             data = None 
+        if integer == 2:
+            if word in sizeDictionary:
+             data = sizeDictionary.get(word)
             else:
              data = None 
         if(data != None):
@@ -378,6 +438,9 @@ def ChecktestingData(integer):
         f.truncate(0)
     if integer == 1:
         f = open("stopword-result.txt", "w")
+        f.truncate(0)
+    if integer == 2:
+        f = open("size-result.txt", "w")
         f.truncate(0)
     i = 0
     for value in testingList:
@@ -426,11 +489,6 @@ def ChecktestingData(integer):
 ##global variables
 baselineDictionary = dict()
 testingList = []
-# storyCount = 0
-# askCount = 0
-# showCount = 0
-# pollCount = 0
-
 labelDictionary = dict()
 #uses labels as keys and then counts as values
 
@@ -450,7 +508,7 @@ ChecktestingData(0)
 
 
 
-### Experiment one is the stop word filtering
+### Experiment One StopWord Filtering
 
 stopWordDictionary = dict()
 stopWordList = []
@@ -459,22 +517,14 @@ stopWordList = []
 ##needs to occur for the stop as well
 labelDictionary.clear()
 
-storyCount = 0
-askCount = 0
-showCount = 0
-pollCount = 0
+# storyCount = 0
+# askCount = 0
+# showCount = 0
+# pollCount = 0
 
 f = open("stopwords.txt", "r")
 
 for x in f:
-    # string = str(x)
-    # word = re.sub("[, \!?:]+", " ", string)
-    # res = re.sub(r'\W+', ' ', word)
-    # if(str(res) != " "):
-    #     word = str(res)
-    #     word = word.lower()
-    #     word = word.strip()
-    #     stopWordList.append(word)
     words = nltk.word_tokenize(x)
     new_words= [word for word in words if word.isalnum()]
     i = 0 
@@ -493,13 +543,17 @@ ChecktestingData(1)
 
 
 
+### Experiment Two word size filtering
+
+sizeDictionary = dict()
+labelDictionary.clear()
+readInFile(2)
+
+sizeDictionary = smoothingData(sizeDictionary)
+sizeWordOutput()
+ChecktestingData(2)
+
+print(labelDictionary)
+print("sizeLength", str(len(sizeDictionary)))
 print("stopLength", str(len(stopWordDictionary)))
 print("baseLenghth", str(len(baselineDictionary)))
-
-
-
-
-
-
-
-
