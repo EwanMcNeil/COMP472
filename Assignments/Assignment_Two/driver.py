@@ -20,6 +20,11 @@ import re
 import string
 import math
 import nltk
+import matplotlib.pyplot as plt
+
+
+plt.ylabel('Accuracy')
+plt.xlabel('number of words')
 
 nltk.download('punkt')
 
@@ -428,7 +433,7 @@ def naiveBays(sentance, integer):
 
 ##function for iterating though the 2019 testing list
 
-def ChecktestingData(integer):
+def ChecktestingData(integer, dictionaryLength, graph):
     global testingList
 
     correct = 0
@@ -477,6 +482,9 @@ def ChecktestingData(integer):
         f.write('\n')
         i += 1
     f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
+    
+    if(graph == True):
+        plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
     f.close()
 
 
@@ -489,6 +497,9 @@ def ChecktestingData(integer):
 ##global variables
 baselineDictionary = dict()
 testingList = []
+
+#since labelDictionary is reused I want to copy it to a new one
+baselineFrequencyDict = dict()
 labelDictionary = dict()
 #uses labels as keys and then counts as values
 
@@ -499,7 +510,27 @@ labelDictionary = dict()
 readInFile(0)
 baselineDictionary = smoothingData(baselineDictionary)
 baselineOutput()
-ChecktestingData(0)
+ChecktestingData(0, len(baselineDictionary), True)
+
+print(baselineDictionary)
+
+
+
+##used in experiment three
+baseFrequency = dict()
+#getting a freqency table from the baseline
+for key in baselineDictionary:
+    frequency = 0
+    values = baselineDictionary[key]
+    for key in labelDictionary:
+        label = labelDictionary[key]
+        index = label[1]
+        frequency += values[index]
+    baseFrequency[key] = frequency
+    
+        
+
+    
 ##passing zero measn that the program will run base
 ##passing one means that it will run the stopOne
 
@@ -538,7 +569,7 @@ for x in f:
 readInFile(1)
 stopWordDictionary = smoothingData(stopWordDictionary)
 stopWordOutput()
-ChecktestingData(1)
+ChecktestingData(1,len(stopWordDictionary), False)
 
 
 
@@ -551,9 +582,17 @@ readInFile(2)
 
 sizeDictionary = smoothingData(sizeDictionary)
 sizeWordOutput()
-ChecktestingData(2)
+ChecktestingData(2, len(sizeDictionary), False)
 
 print(labelDictionary)
 print("sizeLength", str(len(sizeDictionary)))
 print("stopLength", str(len(stopWordDictionary)))
 print("baseLenghth", str(len(baselineDictionary)))
+plt.show()
+
+
+
+
+
+
+####Experiment Three
