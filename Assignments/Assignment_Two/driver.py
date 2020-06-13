@@ -290,11 +290,11 @@ def baselineOutput():
         outputFromDict = baselineDictionary.get(key)
         for value in outputFromDict:
             stringtoWrite = stringtoWrite + " " + str(value)
-        #print(stringtoWrite)
+
         try:
             f.write(stringtoWrite)
         except UnicodeEncodeError:
-            print("errror skipping")
+            print(" ")
             # stringtoWrite = stringtoWrite.encode().decode("utf-8")
             # f.write(stringtoWrite)
         f.write('\n')
@@ -433,7 +433,7 @@ def naiveBays(sentance, integer):
 
 ##function for iterating though the 2019 testing list
 
-def ChecktestingData(integer, dictionaryLength, graph):
+def ChecktestingData(integer, dictionaryLength, graph, inputString):
     global testingList
 
     correct = 0
@@ -486,7 +486,9 @@ def ChecktestingData(integer, dictionaryLength, graph):
             f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
     
     if(graph == True):
+        print(str(dictionaryLength),str(correct/(correct+wrong)))
         plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
+        plt.annotate(inputString, (dictionaryLength,correct/(correct+wrong)))
     if integer != 3:
         f.close()
 
@@ -513,9 +515,7 @@ labelDictionary = dict()
 readInFile(0)
 baselineDictionary = smoothingData(baselineDictionary)
 baselineOutput()
-ChecktestingData(0, len(baselineDictionary), True)
-
-print(baselineDictionary)
+ChecktestingData(0, len(baselineDictionary), True, "Baseline")
 
 
 
@@ -525,13 +525,15 @@ baseFrequency = dict()
 for key in baselineDictionary:
     frequency = 0
     values = baselineDictionary[key]
-    for key in labelDictionary:
-        label = labelDictionary[key]
+    for innerKey in labelDictionary:
+        label = labelDictionary[innerKey]
         index = label[1]
         frequency += values[index]
+
     baseFrequency[key] = frequency
     
-        
+
+
 
     
 ##passing zero measn that the program will run base
@@ -572,7 +574,7 @@ for x in f:
 readInFile(1)
 stopWordDictionary = smoothingData(stopWordDictionary)
 stopWordOutput()
-ChecktestingData(1,len(stopWordDictionary), False)
+ChecktestingData(1,len(stopWordDictionary), False, " ")
 
 
 
@@ -585,7 +587,7 @@ readInFile(2)
 
 sizeDictionary = smoothingData(sizeDictionary)
 sizeWordOutput()
-ChecktestingData(2, len(sizeDictionary), False)
+ChecktestingData(2, len(sizeDictionary), False, " ")
 
 
 
@@ -605,14 +607,67 @@ stopWordList.clear()
 
 for key in baseFrequency:
     value = baseFrequency[key]
+    print(value)
     if value <= 5:
         stopWordList.append(key)
 
+
+print(stopWordList)
 readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
 
-ChecktestingData(3, len(stopWordDictionary), True)
+ChecktestingData(3, len(stopWordDictionary), True, "Less than Five")
+
+
+
+
+
+
+
+stopWordDictionary.clear()
+labelDictionary.clear()
+stopWordList.clear()
+
+
+for key in baseFrequency:
+    value = baseFrequency[key]
+    print(value)
+    if value <= 10:
+        stopWordList.append(key)
+
+
+print(stopWordList)
+readInFile(1)
+
+stopWordDictionary = smoothingData(stopWordDictionary)
+
+ChecktestingData(3, len(stopWordDictionary), True, "Less than Ten")
+
+
+
+
+
+
+
+stopWordDictionary.clear()
+labelDictionary.clear()
+stopWordList.clear()
+
+
+for key in baseFrequency:
+    value = baseFrequency[key]
+    print(value)
+    if value <= 20:
+        stopWordList.append(key)
+
+
+print(stopWordList)
+readInFile(1)
+
+stopWordDictionary = smoothingData(stopWordDictionary)
+
+ChecktestingData(3, len(stopWordDictionary), True, "Less than 20")
 
 print("sizeLength", str(len(sizeDictionary)))
 print("stopLength", str(len(stopWordDictionary)))
