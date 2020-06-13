@@ -395,7 +395,7 @@ def naiveBays(sentance, integer):
              data = baselineDictionary.get(word)
             else:
              data = None 
-        if integer == 1:
+        if ((integer == 1) or (integer == 3)):
             if word in stopWordDictionary:
              data = stopWordDictionary.get(word)
             else:
@@ -465,27 +465,30 @@ def ChecktestingData(integer, dictionaryLength, graph):
         else:
             wrong += 1
 
-        stringtoWrite = str(i) + " " + "classified as: " + classified +  " Acutally " + acutally + " scores: "
-        
-        outputindex = 1
-        while outputindex < len(outputList):
-            stringtoWrite += " " + str(outputList[outputindex])
-            outputindex += 1
+        if integer != 3:
+            stringtoWrite = str(i) + " " + "classified as: " + classified +  " Acutally " + acutally + " scores: "
+            
+            outputindex = 1
+            while outputindex < len(outputList):
+                stringtoWrite += " " + str(outputList[outputindex])
+                outputindex += 1
 
-        stringtoWrite += correctingString
-        try:
-            f.write(stringtoWrite)
-        except UnicodeEncodeError:
-            print("errror skipping")
-            # stringtoWrite = stringtoWrite.encode().decode("utf-8")
-            # f.write(stringtoWrite)
-        f.write('\n')
-        i += 1
-    f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
+            stringtoWrite += correctingString
+            try:
+                f.write(stringtoWrite)
+            except UnicodeEncodeError:
+                print("errror skipping")
+                # stringtoWrite = stringtoWrite.encode().decode("utf-8")
+                # f.write(stringtoWrite)
+            f.write('\n')
+            i += 1
+        if integer != 3:     
+            f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
     
     if(graph == True):
         plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
-    f.close()
+    if integer != 3:
+        f.close()
 
 
 
@@ -584,15 +587,34 @@ sizeDictionary = smoothingData(sizeDictionary)
 sizeWordOutput()
 ChecktestingData(2, len(sizeDictionary), False)
 
-print(labelDictionary)
-print("sizeLength", str(len(sizeDictionary)))
-print("stopLength", str(len(stopWordDictionary)))
-print("baseLenghth", str(len(baselineDictionary)))
-plt.show()
-
 
 
 
 
 
 ####Experiment Three
+##less than 5
+
+##I think i can reuse the stopWord dictionary for now
+
+#lessFiveDictionary = dict()
+stopWordDictionary.clear()
+labelDictionary.clear()
+stopWordList.clear()
+
+
+for key in baseFrequency:
+    value = baseFrequency[key]
+    if value <= 5:
+        stopWordList.append(key)
+
+readInFile(1)
+
+stopWordDictionary = smoothingData(stopWordDictionary)
+
+ChecktestingData(3, len(stopWordDictionary), True)
+
+print("sizeLength", str(len(sizeDictionary)))
+print("stopLength", str(len(stopWordDictionary)))
+print("baseLenghth", str(len(baselineDictionary)))
+plt.show()
