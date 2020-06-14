@@ -21,13 +21,16 @@ import string
 import math
 import nltk
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 plt.ylabel('Accuracy')
 plt.xlabel('number of words')
-
+plt.yticks(np.arange(0.8, 1,0.02 ))
+plt.subplot(1, 2, 1)
 nltk.download('punkt')
 
+
+baselinePoint = []
 
 ##functions
 def addtoDict(word, postType, Experiment):
@@ -137,7 +140,6 @@ def readInFile(Experiment):
             year = row[9]
             
             if line_count == 0:
-                print(f'Column names are {", ".join(row)}')
                 line_count += 1
             else:
 
@@ -156,20 +158,6 @@ def readInFile(Experiment):
 
 
                 title = row[2]
-
-                # res = "".join(filter(lambda x: not x.isdigit(), title)) 
-                # string = str(res)
-                # wordList = re.sub("[, \!?:]+", " ", string).split()
-
-                # wordOutputList = []
-                # for word in wordList:
-                #     res = re.sub(r'\W+', ' ', word)
-
-                #     if(str(res) != " "):
-                #         word = str(res)
-                #         word = word.lower()
-                #         word = word.strip()
-                #         wordOutputList.append(word)
 
                 words = nltk.word_tokenize(title)
                 wordOutputList = [word for word in words if word.isalnum()]
@@ -195,7 +183,6 @@ def readInFile(Experiment):
             DivData[2] = DivData[2]/line_count
             labelDictionary[key] = DivData
 
-        print(f'Processed {line_count} lines.')
 
 
 
@@ -203,39 +190,6 @@ def readInFile(Experiment):
 def smoothingData(inputDictionary):
 
     global labelDictionary
-
-    # i = 0
-    # ##removing the less useful data
-    # for key in inputDictionary:
-    #     valueList = inputDictionary.get(key
-
-
-    #     #if I remove this later remeber to keep this part
-        
-
-     
-
-    #     total = 0
-    #     for key in labelDictionary:
-    #         data = labelDictionary.get(key)
-    #         total += valueList[data[1]]
-        
-    #     if total <= 1:
-    #         del inputDictionary[i]
-            
-    #     i += 1
-
-
-
-
-    #creating the percentages 
-   
-    # global storyCount
-    # global askCount
-    # global showCount
-    # global pollCount
-
-    
     smoothingFactor = len(inputDictionary)*0.5
 
     outputDictionary = inputDictionary.copy()
@@ -482,13 +436,16 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
                 # f.write(stringtoWrite)
             f.write('\n')
             i += 1
-        if integer != 3:     
-            f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
+
+    if integer != 3:     
+        f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
     
     if(graph == True):
-        print(str(dictionaryLength),str(correct/(correct+wrong)))
         plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
         plt.annotate(inputString, (dictionaryLength,correct/(correct+wrong)))
+        if(inputString == "Baseline" ):
+            baselinePoint.append(dictionaryLength)
+            baselinePoint.append(correct/(correct+wrong))
     if integer != 3:
         f.close()
 
@@ -607,12 +564,11 @@ stopWordList.clear()
 
 for key in baseFrequency:
     value = baseFrequency[key]
-    print(value)
     if value <= 5:
         stopWordList.append(key)
 
 
-print(stopWordList)
+
 readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
@@ -632,12 +588,11 @@ stopWordList.clear()
 
 for key in baseFrequency:
     value = baseFrequency[key]
-    print(value)
     if value <= 10:
         stopWordList.append(key)
 
 
-print(stopWordList)
+
 readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
@@ -657,17 +612,78 @@ stopWordList.clear()
 
 for key in baseFrequency:
     value = baseFrequency[key]
-    print(value)
     if value <= 20:
         stopWordList.append(key)
 
 
-print(stopWordList)
+
 readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
 
 ChecktestingData(3, len(stopWordDictionary), True, "Less than 20")
+
+
+
+
+
+
+
+
+
+plt.subplot(1, 2, 2)
+
+plt.plot(baselinePoint[0],baselinePoint[1],'ro')
+
+
+##now I want to go through the base Freqeuncy and organize by size
+sortedfrequencyList = []
+
+for key in baseFrequency:
+    value = baseFrequency[key]
+    sortedfrequencyList.append(value)
+
+sortedfrequencyList.sort(reverse = True)
+
+
+
+
+# Then gradually remove the
+# top 5% most frequent words, the 10% most frequent words, 15%, 20% and 25% most frequent
+# words
+def freqencyGraph(percent, String):
+    global stopWordDictionary
+    global labelDictionary
+    global stopWordList
+    global sortedfrequencyList
+
+    stopWordDictionary.clear()
+    labelDictionary.clear()
+    stopWordList.clear()
+
+
+    index = math.ceil(len(sortedfrequencyList)*percent) -1
+    thresholdValue = sortedfrequencyList[index]
+
+    for key in baseFrequency:
+        value = baseFrequency[key]
+        if value >= thresholdValue:
+            stopWordList.append(key)
+
+
+    readInFile(1)
+
+    stopWordDictionary = smoothingData(stopWordDictionary)
+
+    ChecktestingData(3, len(stopWordDictionary), True, String)
+
+
+freqencyGraph(0.05, "Top 5 %")
+freqencyGraph(0.1, "Top 10 %")
+freqencyGraph(0.15, "Top 15 %")
+freqencyGraph(0.2, "Top 20 %")
+freqencyGraph(0.25, "Top 25 %")
+
 
 print("sizeLength", str(len(sizeDictionary)))
 print("stopLength", str(len(stopWordDictionary)))
