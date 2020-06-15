@@ -25,7 +25,9 @@ import numpy as np
 
 plt.ylabel('Accuracy')
 plt.xlabel('number of words')
-plt.yticks(np.arange(0.8, 1,0.02 ))
+#plt.yticks(np.arange(0.5, 1,0.02 ))
+axes = plt.gca()
+axes.set_ylim([0.5,1])
 plt.subplot(1, 2, 1)
 nltk.download('punkt')
 
@@ -60,24 +62,6 @@ def addtoDict(word, postType, Experiment):
             data[0] = data[0] + 1
             index = data[1]
             labelDictionary[key] = data
-
-    # #index of the current type
-    # if(postType == 'story'):
-    #     print("story")
-    #     storyCount += 1
-    #     index = 0
-        
-    # if(postType == 'ask_hn'):
-    #     askCount += 1
-    #     index = 2
-        
-    # if(postType == 'show_hn'):
-    #     showCount += 1
-    #     index = 4
-        
-    # if(postType == 'poll'):
-    #     pollCount += 1
-    #     index = 6
 
 
     
@@ -274,11 +258,10 @@ def stopWordOutput():
         outputFromDict =stopWordDictionary.get(key)
         for value in outputFromDict:
             stringtoWrite = stringtoWrite + " " + str(value)
-        #print(stringtoWrite)
         try:
             f.write(stringtoWrite)
         except UnicodeEncodeError:
-            print("errror skipping")
+            print(" ")
             # stringtoWrite = stringtoWrite.encode().decode("utf-8")
             # f.write(stringtoWrite)
         f.write('\n')
@@ -308,7 +291,7 @@ def sizeWordOutput():
         try:
             f.write(stringtoWrite)
         except UnicodeEncodeError:
-            print("errror skipping")
+            print(" ")
             # stringtoWrite = stringtoWrite.encode().decode("utf-8")
             # f.write(stringtoWrite)
         f.write('\n')
@@ -400,7 +383,7 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
             matrixList.append(innerKey)
             matrixList.append(0)
     
-    print(confusionMatrix)
+    
 
 
 
@@ -457,7 +440,7 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
             try:
                 f.write(stringtoWrite)
             except UnicodeEncodeError:
-                print("errror skipping")
+                print(" ")
                 # stringtoWrite = stringtoWrite.encode().decode("utf-8")
                 # f.write(stringtoWrite)
             f.write('\n')
@@ -465,10 +448,21 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
     if integer != 3:     
         f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
-    print(confusionMatrix)
+    print("Confusion Matrix:", "\n",confusionMatrix)
     metricMatrix = calculateMetrics(confusionMatrix)
-    print(metricMatrix)
+    print("Metric Matrix:", "\n",metricMatrix)
+
+    fAvg = 0
+    for key in metricMatrix:
+        values = metricMatrix[key]
+        fAvg += values[2]
+    
+    fAvg = fAvg/len(metricMatrix)
+
+    print("this models average F measurement is: ", fAvg)
+
     if(graph == True):
+        plt.plot(dictionaryLength, fAvg, "*")
         plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
         plt.annotate(inputString, (dictionaryLength,correct/(correct+wrong)))
         if(inputString == "Baseline" ):
@@ -486,6 +480,7 @@ def calculateMetrics(confusionMatrix):
     for key in confusionMatrix:
         #the three are set for Precision Recall and F
         metricMatrix[key] = [0,0,0]
+
 
     
     #doing precision first
@@ -505,7 +500,55 @@ def calculateMetrics(confusionMatrix):
         metricList = metricMatrix[key]
         metricList[0] = (truePos/(truePos+falsePos))
         metricMatrix[key] = metricList
+        
 
+    #now doing recall
+    for key in confusionMatrix:
+        truePos = 0
+        missPos = 0
+
+
+        # find the value of the correctly identified 
+        matrixList = confusionMatrix[key]
+        matrixIndex = 0
+        while matrixIndex <= len(matrixList):
+            if(key == matrixList[matrixIndex]):
+                truePos = matrixList[matrixIndex+1]
+            matrixIndex += 2
+            if matrixIndex >= len(matrixList):
+                break
+
+        #go through the other keys and find the value of the missed
+        for innerKey in confusionMatrix:
+            if not (innerKey == key):
+               
+                innermatrixList = confusionMatrix[innerKey]
+                innermatrixIndex = 0
+                while innermatrixIndex <= len(innermatrixList):
+                    if(key == innermatrixList[innermatrixIndex]):
+                        missPos += innermatrixList[innermatrixIndex+1]
+                    innermatrixIndex += 2
+                    if innermatrixIndex >= len(innermatrixList):
+                         break
+        
+        metricList = metricMatrix[key]
+        metricList[1] = (truePos/(truePos+missPos))
+        metricMatrix[key] = metricList
+
+
+    #now doing the f measure the last in the metric matrix
+    #F1-score = 2 × (precision × recall)/(precision + recall)
+
+    for key in metricMatrix:
+        metricList = metricMatrix[key]
+        precision = metricList[0]
+        recall = metricList[1]
+        try:
+            fScore = (2*(precision*recall))/(precision + recall)
+        except ZeroDivisionError:
+            fScore = 0
+        metricList[2] = fScore
+        metricMatrix[key] = metricList
 
     return metricMatrix
 
@@ -529,6 +572,8 @@ labelDictionary = dict()
 readInFile(0)
 baselineDictionary = smoothingData(baselineDictionary)
 baselineOutput()
+
+print("\n", "BaseLine Result", "\n" )
 ChecktestingData(0, len(baselineDictionary), True, "Baseline")
 
 
@@ -555,7 +600,7 @@ for key in baselineDictionary:
 ##passing zero measn that the program will run base
 ##passing one means that it will run the stopOne
 
-print(labelDictionary)
+
 
 userInputOne = input("Press Enter to run Experiement One StopWord fiter")
 
@@ -590,6 +635,8 @@ for x in f:
 readInFile(1)
 stopWordDictionary = smoothingData(stopWordDictionary)
 stopWordOutput()
+
+print("\n", "Stopword Experiment Result", "\n" )
 ChecktestingData(1,len(stopWordDictionary), False, " ")
 
 
@@ -603,6 +650,8 @@ readInFile(2)
 
 sizeDictionary = smoothingData(sizeDictionary)
 sizeWordOutput()
+
+print("\n", "Experiment Two Result", "\n" )
 ChecktestingData(2, len(sizeDictionary), False, " ")
 
 
@@ -632,6 +681,8 @@ readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
 
+
+print("\n", "Less than Five", "\n" )
 ChecktestingData(3, len(stopWordDictionary), True, "Less than Five")
 
 
@@ -656,6 +707,8 @@ readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
 
+
+print("\n", "Less than Ten", "\n" )
 ChecktestingData(3, len(stopWordDictionary), True, "Less than Ten")
 
 
@@ -680,6 +733,8 @@ readInFile(1)
 
 stopWordDictionary = smoothingData(stopWordDictionary)
 
+
+print("\n", "Less than 20", "\n" )
 ChecktestingData(3, len(stopWordDictionary), True, "Less than 20")
 
 
@@ -736,7 +791,7 @@ def freqencyGraph(percent, String):
 
     ChecktestingData(3, len(stopWordDictionary), True, String)
 
-
+print("\n", "Part Two Experiment Thre", "\n" )
 freqencyGraph(0.05, "Top 5 %")
 freqencyGraph(0.1, "Top 10 %")
 freqencyGraph(0.15, "Top 15 %")
