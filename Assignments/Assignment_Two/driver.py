@@ -389,6 +389,20 @@ def naiveBays(sentance, integer):
 
 def ChecktestingData(integer, dictionaryLength, graph, inputString):
     global testingList
+    global labelDictionary
+
+    confusionMatrix = dict()
+    for key in labelDictionary:
+        #making a list inside the confusion matrix
+        confusionMatrix[key] = []
+        for innerKey in labelDictionary:
+            matrixList = confusionMatrix[key]
+            matrixList.append(innerKey)
+            matrixList.append(0)
+    
+    print(confusionMatrix)
+
+
 
     correct = 0
     wrong = 0
@@ -412,6 +426,18 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
         classified = str(outputList[0])
         acutally = str(postType)
         correctingString = " wrong"
+
+        matrixList = confusionMatrix[acutally]
+        matrixIndex = 0
+        while matrixIndex <= len(matrixList):
+            if(classified == matrixList[matrixIndex]):
+                break
+            matrixIndex += 1
+        
+        matrixValue = matrixList[matrixIndex+1]
+        matrixValue += 1
+        matrixList[matrixIndex+1] = matrixValue
+        confusionMatrix[acutally] = matrixList
 
         if classified == acutally:
             correctingString = " right "
@@ -439,7 +465,9 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
     if integer != 3:     
         f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
-    
+    print(confusionMatrix)
+    metricMatrix = calculateMetrics(confusionMatrix)
+    print(metricMatrix)
     if(graph == True):
         plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
         plt.annotate(inputString, (dictionaryLength,correct/(correct+wrong)))
@@ -451,6 +479,35 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
 
 
+
+def calculateMetrics(confusionMatrix):
+    metricMatrix = dict()
+
+    for key in confusionMatrix:
+        #the three are set for Precision Recall and F
+        metricMatrix[key] = [0,0,0]
+
+    
+    #doing precision first
+    for key in confusionMatrix:
+        truePos = 0
+        falsePos = 0
+        matrixList = confusionMatrix[key]
+        matrixIndex = 0
+        while matrixIndex <= len(matrixList):
+            if(key == matrixList[matrixIndex]):
+                truePos = matrixList[matrixIndex+1]
+            else:
+                falsePos += matrixList[matrixIndex+1]
+            matrixIndex += 2
+            if matrixIndex >= len(matrixList):
+                break
+        metricList = metricMatrix[key]
+        metricList[0] = (truePos/(truePos+falsePos))
+        metricMatrix[key] = metricList
+
+
+    return metricMatrix
 
 
 
@@ -476,6 +533,8 @@ ChecktestingData(0, len(baselineDictionary), True, "Baseline")
 
 
 
+
+
 ##used in experiment three
 baseFrequency = dict()
 #getting a freqency table from the baseline
@@ -496,9 +555,9 @@ for key in baselineDictionary:
 ##passing zero measn that the program will run base
 ##passing one means that it will run the stopOne
 
+print(labelDictionary)
 
-
-
+userInputOne = input("Press Enter to run Experiement One StopWord fiter")
 
 
 ### Experiment One StopWord Filtering
