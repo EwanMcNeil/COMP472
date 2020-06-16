@@ -498,7 +498,10 @@ def calculateMetrics(confusionMatrix):
             if matrixIndex >= len(matrixList):
                 break
         metricList = metricMatrix[key]
-        metricList[0] = (truePos/(truePos+falsePos))
+        try:
+            metricList[0] = (truePos/(truePos+falsePos))
+        except ZeroDivisionError:
+            metricList[0] = 1
         metricMatrix[key] = metricList
         
 
@@ -532,7 +535,10 @@ def calculateMetrics(confusionMatrix):
                          break
         
         metricList = metricMatrix[key]
-        metricList[1] = (truePos/(truePos+missPos))
+        try:
+            metricList[1] = (truePos/(truePos+missPos))
+        except ZeroDivisionError:
+            metricList[1] = 1
         metricMatrix[key] = metricList
 
 
@@ -546,7 +552,7 @@ def calculateMetrics(confusionMatrix):
         try:
             fScore = (2*(precision*recall))/(precision + recall)
         except ZeroDivisionError:
-            fScore = 0
+            fScore = 1
         metricList[2] = fScore
         metricMatrix[key] = metricList
 
@@ -684,10 +690,6 @@ stopWordDictionary = smoothingData(stopWordDictionary)
 
 print("\n", "Less than Five", "\n" )
 ChecktestingData(3, len(stopWordDictionary), True, "Less than Five")
-
-
-
-
 
 
 
