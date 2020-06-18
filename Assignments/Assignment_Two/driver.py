@@ -116,7 +116,7 @@ def addtoDict(word, postType, Experiment):
 def readInFile(Experiment):
     global labelDictionary
     
-    with open('hns_2018_2019.csv',encoding='utf-8') as csv_file:
+    with open('test.csv',encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         typeCount = 0
@@ -143,14 +143,15 @@ def readInFile(Experiment):
 
                 title = row[2]
 
-                words = nltk.word_tokenize(title)
-                wordOutputList = [word for word in words if word.isalnum()]
-                i = 0 
-                for word in wordOutputList:
-                    wordOutputList[i] = (word.lower()).strip()
-                    if(any(char.isdigit() for char in word)):
-                       del wordOutputList[i]
-                    i += 1
+                wordOutputList = tokenAndFilter(title)
+                # words = nltk.word_tokenize(title)
+                # wordOutputList = [word for word in words if word.isalnum()]
+                # i = 0 
+                # for word in wordOutputList:
+                #     wordOutputList[i] = (word.lower()).strip()
+                #     if(any(char.isdigit() for char in word)):
+                #        del wordOutputList[i]
+                #     i += 1
 
                 if(year == '2018'):
                     for word in wordOutputList:
@@ -168,6 +169,54 @@ def readInFile(Experiment):
             labelDictionary[key] = DivData
 
 
+def tokenAndFilter(title):
+    
+    tokenizedWords = nltk.word_tokenize(title)
+
+
+    i = 0
+    for word in tokenizedWords:
+        tokenizedWords[i] = word.lower()
+        i += 1
+
+    #lower the tokens and compare what we've filtered out
+
+    new_words = []
+
+    #filters out digits
+    #new_words= [word for word in words if word.isalnum()]
+    #new_words = [x for x in words if not any(c.isdigit() for c in x)]
+    a = "1234567890"
+    i = 0
+    for word in tokenizedWords:
+        for char in a:
+            word = word.replace(char,"")
+        new_words.append(word)
+        i+= 1
+
+    a = "_)([{]},':;-"
+    i = 0
+    for word in new_words:
+        for char in a:
+            word = word.replace(char,"")
+        new_words[i] = word
+        i+= 1
+        
+
+    i = 0
+    for word in new_words:
+        new_words[i] = word.lower()
+        if word == '':
+            del new_words[i]
+        i += 1
+
+    removedWords =  []
+    for word in tokenizedWords:
+        if not word in new_words:
+            if not word in removedWords:
+                removedWords.append(word)
+
+    return new_words
 
 
 
@@ -501,7 +550,7 @@ def calculateMetrics(confusionMatrix):
         try:
             metricList[0] = (truePos/(truePos+falsePos))
         except ZeroDivisionError:
-            metricList[0] = 1
+            metricList[0] = 0
         metricMatrix[key] = metricList
         
 
@@ -538,7 +587,7 @@ def calculateMetrics(confusionMatrix):
         try:
             metricList[1] = (truePos/(truePos+missPos))
         except ZeroDivisionError:
-            metricList[1] = 1
+            metricList[1] = 0
         metricMatrix[key] = metricList
 
 
@@ -552,7 +601,7 @@ def calculateMetrics(confusionMatrix):
         try:
             fScore = (2*(precision*recall))/(precision + recall)
         except ZeroDivisionError:
-            fScore = 1
+            fScore = 0
         metricList[2] = fScore
         metricMatrix[key] = metricList
 
@@ -628,14 +677,15 @@ labelDictionary.clear()
 f = open("stopwords.txt", "r")
 
 for x in f:
-    words = nltk.word_tokenize(x)
-    new_words= [word for word in words if word.isalnum()]
-    i = 0 
+    # words = nltk.word_tokenize(x)
+    # new_words= [word for word in words if word.isalnum()]
+    # i = 0 
+    # for word in new_words:
+    #     new_words[i] = (word.lower()).strip()
+    #     i += 1
+    new_words = tokenAndFilter(x)
     for word in new_words:
-        new_words[i] = (word.lower()).strip()
-        i += 1
-    for word in new_words:
-        stopWordList.append(word)
+         stopWordList.append(word)
 
 
 readInFile(1)

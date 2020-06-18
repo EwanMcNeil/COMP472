@@ -59,7 +59,8 @@ def tokenAndFilter(title):
 
     print("newWorlds", new_words)
 
-    print("removedWords", removedWords)
+    print("removedWords", removedWords)\
+    return new_words
 
 
 
