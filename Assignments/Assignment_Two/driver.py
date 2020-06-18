@@ -115,8 +115,8 @@ def addtoDict(word, postType, Experiment):
 
 def readInFile(Experiment):
     global labelDictionary
-    
-    with open('test.csv',encoding='utf-8') as csv_file:
+    removedWords = []
+    with open('hns_2018_2019.csv',encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         typeCount = 0
@@ -143,19 +143,17 @@ def readInFile(Experiment):
 
                 title = row[2]
 
-                wordOutputList = tokenAndFilter(title)
-                # words = nltk.word_tokenize(title)
-                # wordOutputList = [word for word in words if word.isalnum()]
-                # i = 0 
-                # for word in wordOutputList:
-                #     wordOutputList[i] = (word.lower()).strip()
-                #     if(any(char.isdigit() for char in word)):
-                #        del wordOutputList[i]
-                #     i += 1
-
+                tokenAndFilterTup = tokenAndFilter(title)
+                wordOutputList = tokenAndFilterTup[0]
+                removed = tokenAndFilterTup[1]
                 if(year == '2018'):
                     for word in wordOutputList:
                             addtoDict(word, postType,Experiment)
+                
+                if(year == '2018' and Experiment == 0):
+                    for word in removed:
+                        if word not in removedWords:
+                            removedWords.append(word)
                 
                 if(year == '2019' and Experiment == 0):
                     listTuple = [wordOutputList, postType]
@@ -163,10 +161,13 @@ def readInFile(Experiment):
                 
                 line_count += 1
         
+
         for key in labelDictionary:
             DivData = labelDictionary[key]
             DivData[2] = DivData[2]/line_count
             labelDictionary[key] = DivData
+        
+        removedWordsOutput(removedWords)
 
 
 def tokenAndFilter(title):
@@ -194,7 +195,7 @@ def tokenAndFilter(title):
         new_words.append(word)
         i+= 1
 
-    a = "_)([{]},':;-"
+    a = "_)([{]},':;"
     i = 0
     for word in new_words:
         for char in a:
@@ -216,7 +217,7 @@ def tokenAndFilter(title):
             if not word in removedWords:
                 removedWords.append(word)
 
-    return new_words
+    return new_words, removedWords
 
 
 
@@ -232,15 +233,6 @@ def smoothingData(inputDictionary):
 
         valueList = inputDictionary.get(key)
     
-        # storyPercent = ((valueList[0]+0.5)/(storyCount+smoothingFactor))
-        # askPercent = ((valueList[2]+0.5)/(askCount+smoothingFactor))
-        # showPercent = ((valueList[4]+0.5)/(showCount +smoothingFactor))
-        # pollPercent = ((valueList[6]+0.5)/(pollCount+smoothingFactor))
-
-        # valueList[1] = storyPercent
-        # valueList[3] = askPercent
-        # valueList[5] = showPercent
-        # valueList[7]= pollPercent
 
         ##to account for unseen zeros
         while len(valueList) < (len(labelDictionary)*2):
@@ -288,7 +280,22 @@ def baselineOutput():
         i += 1
     f.close()
 
+def removedWordsOutput(removedWords):
 
+    print("REMOVED",removedWords)
+    f = open("removed.txt", "w")
+    f.truncate(0)
+    i = 0
+    for word in removedWords:
+        try:
+            f.write(str(word))
+        except UnicodeEncodeError:
+            print(" ")
+            # stringtoWrite = stringtoWrite.encode().decode("utf-8")
+            # f.write(stringtoWrite)
+        f.write('\n')
+        i += 1
+    f.close()
 
 def stopWordOutput():
     global stopWordDictionary
@@ -677,12 +684,6 @@ labelDictionary.clear()
 f = open("stopwords.txt", "r")
 
 for x in f:
-    # words = nltk.word_tokenize(x)
-    # new_words= [word for word in words if word.isalnum()]
-    # i = 0 
-    # for word in new_words:
-    #     new_words[i] = (word.lower()).strip()
-    #     i += 1
     new_words = tokenAndFilter(x)
     for word in new_words:
          stopWordList.append(word)
@@ -721,6 +722,36 @@ ChecktestingData(2, len(sizeDictionary), False, " ")
 ##I think i can reuse the stopWord dictionary for now
 
 #lessFiveDictionary = dict()
+
+
+stopWordDictionary.clear()
+labelDictionary.clear()
+stopWordList.clear()
+
+
+for key in baseFrequency:
+    value = baseFrequency[key]
+    if value == 1:
+        stopWordList.append(key)
+
+
+
+readInFile(1)
+
+stopWordDictionary = smoothingData(stopWordDictionary)
+
+
+print("\n", "Equal One", "\n" )
+ChecktestingData(3, len(stopWordDictionary), True, "Equal One")
+
+
+
+
+
+
+
+
+
 stopWordDictionary.clear()
 labelDictionary.clear()
 stopWordList.clear()
