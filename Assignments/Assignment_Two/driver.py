@@ -23,12 +23,23 @@ import nltk
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.ylabel('Accuracy')
-plt.xlabel('number of words')
+
+fig, axs = plt.subplots(2, 4)
+
+
+axs[0, 0].set_title('Accuracy')
+axs[0, 1].set_title('Precison')
+axs[0, 2].set_title('Recall')
+axs[0, 3].set_title('F Measure')
+axs[1, 0].set_title('Accuracy')
+axs[1, 1].set_title('Precison')
+axs[1, 2].set_title('Recall')
+axs[1, 3].set_title('F Measure')
+
 #plt.yticks(np.arange(0.5, 1,0.02 ))
-axes = plt.gca()
-axes.set_ylim([0.5,1])
-plt.subplot(1, 2, 1)
+
+# axes.set_ylim([0.5,1])
+# plt.subplot(1, 2, 1)
 nltk.download('punkt')
 
 
@@ -282,7 +293,7 @@ def baselineOutput():
 
 def removedWordsOutput(removedWords):
 
-    print("REMOVED",removedWords)
+   
     f = open("removed.txt", "w")
     f.truncate(0)
     i = 0
@@ -318,8 +329,6 @@ def stopWordOutput():
             f.write(stringtoWrite)
         except UnicodeEncodeError:
             print(" ")
-            # stringtoWrite = stringtoWrite.encode().decode("utf-8")
-            # f.write(stringtoWrite)
         f.write('\n')
         i += 1
     f.close()
@@ -359,7 +368,7 @@ def sizeWordOutput():
 # Key: freq story, % story, freq ask_hn, % ask Hn, freq show_hn, % show_hn, freq poll, % poll  
 
 
-# Key: freq story, % story, freq ask_hn, % ask Hn, freq show_hn, % show_hn, freq poll, % poll 
+
 
 ##task two is to use ML classifier to test the 2019 dataset
 ##take in array of words and calculate it
@@ -375,10 +384,6 @@ def naiveBays(sentance, integer):
     for key in labelDictionary:
         percentdata = labelDictionary[key]
         scoreDictionary[key] = math.log10(percentdata[2])
-    # storyScore = 0
-    # askScore = 0
-    # showScore = 0
-    # pollScore = 0
     global baselineDictionary
     global stopWordDictionary
 
@@ -405,10 +410,6 @@ def naiveBays(sentance, integer):
                 currentScore += math.log10((data[labelInfo[1]+1]))
                 scoreDictionary[key] = currentScore
                 
-            # storyScore += math.log10(float(data[1]))
-            # askScore += math.log10(float(data[3]))
-            # showScore += math.log10(float(data[5]))
-            # pollScore += math.log10(float(data[7]))
 
     # values = {'story': storyScore, 'ask_hn': askScore, 'show_hn': showScore, 'poll': pollScore}
 
@@ -508,19 +509,26 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
     metricMatrix = calculateMetrics(confusionMatrix)
     print("Metric Matrix:", "\n",metricMatrix)
 
-    fAvg = 0
-    for key in metricMatrix:
-        values = metricMatrix[key]
-        fAvg += values[2]
-    
-    fAvg = fAvg/len(metricMatrix)
 
-    print("this models average F measurement is: ", fAvg)
 
+
+    Accuracy = correct/(correct+wrong)
+
+    print("this models average F measurement is: ", metricMatrix[2])
+
+    global experimentSwitch
     if(graph == True):
-        plt.plot(dictionaryLength, fAvg, "*")
-        plt.plot(dictionaryLength,correct/(correct+wrong),'ro')
-        plt.annotate(inputString, (dictionaryLength,correct/(correct+wrong)))
+        if(experimentSwitch):
+            axs[0,0].plot(dictionaryLength, Accuracy, "*")
+            axs[0,1].plot(dictionaryLength, metricMatrix[0], "*")
+            axs[0,2].plot(dictionaryLength, metricMatrix[1], "*")
+            axs[0,3].plot(dictionaryLength, metricMatrix[2], "*")
+        else:
+            axs[1,0].plot(dictionaryLength, Accuracy, "*")
+            axs[1,1].plot(dictionaryLength, metricMatrix[0], "*")
+            axs[1,2].plot(dictionaryLength, metricMatrix[1], "*")
+            axs[1,3].plot(dictionaryLength, metricMatrix[2], "*")
+        
         if(inputString == "Baseline" ):
             baselinePoint.append(dictionaryLength)
             baselinePoint.append(correct/(correct+wrong))
@@ -530,7 +538,12 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
 
 
+
+
 def calculateMetrics(confusionMatrix):
+    
+
+    
     metricMatrix = dict()
 
     for key in confusionMatrix:
@@ -598,24 +611,33 @@ def calculateMetrics(confusionMatrix):
         metricMatrix[key] = metricList
 
 
-    #now doing the f measure the last in the metric matrix
-    #F1-score = 2 × (precision × recall)/(precision + recall)
+
+
+
+    output = [0,0,0]
+    recallSum = 0
+    precisionSum = 0
 
     for key in metricMatrix:
-        metricList = metricMatrix[key]
-        precision = metricList[0]
-        recall = metricList[1]
-        try:
-            fScore = (2*(precision*recall))/(precision + recall)
-        except ZeroDivisionError:
-            fScore = 0
-        metricList[2] = fScore
-        metricMatrix[key] = metricList
+        values = metricMatrix[key]
+        precisionSum += values[0]
+        recallSum += values[1]
+    
+    precision = precisionSum/len(metricMatrix)
+    recall = recallSum/len(metricMatrix)
 
-    return metricMatrix
+    fScore = (2*(precision*recall))/(precision + recall)
+    output[0] = precision
+    output[1] = recall
+    output[2] = fScore
+
+    return output
 
 
 
+
+
+experimentSwitch = True
 #####driver class
 
 ##global variables
@@ -676,10 +698,6 @@ stopWordList = []
 ##needs to occur for the stop as well
 labelDictionary.clear()
 
-# storyCount = 0
-# askCount = 0
-# showCount = 0
-# pollCount = 0
 
 f = open("stopwords.txt", "r")
 
@@ -828,9 +846,9 @@ ChecktestingData(3, len(stopWordDictionary), True, "Less than 20")
 
 
 
-plt.subplot(1, 2, 2)
+# plt.subplot(1, 2, 2)
 
-plt.plot(baselinePoint[0],baselinePoint[1],'ro')
+# plt.plot(baselinePoint[0],baselinePoint[1],'ro')
 
 
 ##now I want to go through the base Freqeuncy and organize by size
@@ -845,6 +863,8 @@ sortedfrequencyList.sort(reverse = True)
 
 
 
+
+experimentSwitch = False
 # Then gradually remove the
 # top 5% most frequent words, the 10% most frequent words, 15%, 20% and 25% most frequent
 # words
