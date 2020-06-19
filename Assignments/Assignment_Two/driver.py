@@ -36,6 +36,7 @@ axs[1, 1].set_title('Precison')
 axs[1, 2].set_title('Recall')
 axs[1, 3].set_title('F Measure')
 
+
 #plt.yticks(np.arange(0.5, 1,0.02 ))
 
 # axes.set_ylim([0.5,1])
@@ -47,6 +48,9 @@ baselinePoint = []
 
 ##functions
 def addtoDict(word, postType, Experiment):
+    
+    if not word:
+        return
     
     global labelDictionary
     global stopWordList
@@ -206,7 +210,7 @@ def tokenAndFilter(title):
         new_words.append(word)
         i+= 1
 
-    a = "_)([{]},':;"
+    a = "_)([{]},':;�-!#$%&+*-<>./=?@^``"
     i = 0
     for word in new_words:
         for char in a:
@@ -218,10 +222,15 @@ def tokenAndFilter(title):
     i = 0
     for word in new_words:
         new_words[i] = word.lower()
-        if word == '':
+        if word == " ":
             del new_words[i]
         i += 1
 
+    i = 0
+    for word in new_words:
+        new_words[i] = word.strip()
+        i += 1
+    
     removedWords =  []
     for word in tokenizedWords:
         if not word in new_words:
@@ -343,7 +352,7 @@ def sizeWordOutput():
 
     sortedkeys.sort()
 
-    f = open("size-model.txt", "w")
+    f = open("wordlength-model.txt", "w")
     f.truncate(0)
     i = 0
     for key in sortedkeys:
@@ -453,7 +462,7 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
         f = open("stopword-result.txt", "w")
         f.truncate(0)
     if integer == 2:
-        f = open("size-result.txt", "w")
+        f = open("wordlength-result.txt.", "w")
         f.truncate(0)
     i = 0
     for value in testingList:
@@ -505,6 +514,7 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
     if integer != 3:     
         f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
+    print(("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong "))
     print("Confusion Matrix:", "\n",confusionMatrix)
     metricMatrix = calculateMetrics(confusionMatrix)
     print("Metric Matrix:", "\n",metricMatrix)
@@ -530,8 +540,10 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
             axs[1,3].plot(dictionaryLength, metricMatrix[2], "*")
         
         if(inputString == "Baseline" ):
-            baselinePoint.append(dictionaryLength)
-            baselinePoint.append(correct/(correct+wrong))
+            axs[1,0].plot(dictionaryLength, Accuracy, "*")
+            axs[1,1].plot(dictionaryLength, metricMatrix[0], "*")
+            axs[1,2].plot(dictionaryLength, metricMatrix[1], "*")
+            axs[1,3].plot(dictionaryLength, metricMatrix[2], "*")
     if integer != 3:
         f.close()
 
@@ -637,6 +649,9 @@ def calculateMetrics(confusionMatrix):
 
 
 
+
+
+
 experimentSwitch = True
 #####driver class
 
@@ -685,27 +700,29 @@ for key in baselineDictionary:
 ##passing one means that it will run the stopOne
 
 
-
+print("\n")
 userInputOne = input("Press Enter to run Experiement One StopWord fiter")
-
+print("\n")
 
 ### Experiment One StopWord Filtering
 
 stopWordDictionary = dict()
-stopWordList = []
+
 
 ##reseting the counter
 ##needs to occur for the stop as well
 labelDictionary.clear()
 
-
+stopWordList= []
 f = open("stopwords.txt", "r")
-
+stopWordString = ""
 for x in f:
-    new_words = tokenAndFilter(x)
-    for word in new_words:
-         stopWordList.append(word)
+    tokenized = tokenAndFilter(x)
+    words = tokenized[0]
+    stopWordList.append(words[0])
 
+
+print(stopWordList)
 
 readInFile(1)
 stopWordDictionary = smoothingData(stopWordDictionary)
@@ -717,6 +734,10 @@ ChecktestingData(1,len(stopWordDictionary), False, " ")
 
 
 
+print("\n")
+
+userInputTwo = input("Press Enter to run the size filter")
+print("\n")
 ### Experiment Two word size filtering
 
 sizeDictionary = dict()
@@ -848,7 +869,7 @@ ChecktestingData(3, len(stopWordDictionary), True, "Less than 20")
 
 # plt.subplot(1, 2, 2)
 
-# plt.plot(baselinePoint[0],baselinePoint[1],'ro')
+#plt.plot(baselinePoint[0],baselinePoint[1],'ro')
 
 
 ##now I want to go through the base Freqeuncy and organize by size
@@ -905,4 +926,7 @@ freqencyGraph(0.25, "Top 25 %")
 print("sizeLength", str(len(sizeDictionary)))
 print("stopLength", str(len(stopWordDictionary)))
 print("baseLenghth", str(len(baselineDictionary)))
+
+
+plt.xticks(np.arange(0, 1, 0.2))
 plt.show()
