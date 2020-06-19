@@ -22,19 +22,28 @@ import math
 import nltk
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+
 
 
 fig, axs = plt.subplots(2, 4)
 
+axs[0, 0].set_title("Removing Lowest Frequencies")
+axs[1, 0].set_title('Removing Highest Frequencies')
 
-axs[0, 0].set_title('Accuracy')
-axs[0, 1].set_title('Precison')
-axs[0, 2].set_title('Recall')
-axs[0, 3].set_title('F Measure')
-axs[1, 0].set_title('Accuracy')
-axs[1, 1].set_title('Precison')
-axs[1, 2].set_title('Recall')
-axs[1, 3].set_title('F Measure')
+
+axs[0, 0].set_ylabel('Accuracy')
+axs[0, 1].set_ylabel('Precison')
+axs[0, 2].set_ylabel('Recall')
+axs[0, 3].set_ylabel('F Measure')
+axs[1, 0].set_ylabel('Accuracy')
+axs[1, 1].set_ylabel('Precison')
+axs[1, 2].set_ylabel('Recall')
+axs[1, 3].set_ylabel('F Measure')
+
+
+
 
 
 #plt.yticks(np.arange(0.5, 1,0.02 ))
@@ -361,7 +370,6 @@ def sizeWordOutput():
         outputFromDict = sizeDictionary.get(key)
         for value in outputFromDict:
             stringtoWrite = stringtoWrite + " " + str(value)
-        #print(stringtoWrite)
         try:
             f.write(stringtoWrite)
         except UnicodeEncodeError:
@@ -514,17 +522,12 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
     if integer != 3:     
         f.write("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong ")
-    print(("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong "))
-    print("Confusion Matrix:", "\n",confusionMatrix)
+    print(("This model Got " + str(correct) + " Correct and " + str(wrong) + " wrong "), "\n")
+    print("Confusion Matrix:", "\n",confusionMatrix,"\n")
     metricMatrix = calculateMetrics(confusionMatrix)
-    print("Metric Matrix:", "\n",metricMatrix)
-
-
-
+    print("Metric Matrix(precison,recall,fscore):", "\n",metricMatrix)
 
     Accuracy = correct/(correct+wrong)
-
-    print("this models average F measurement is: ", metricMatrix[2])
 
     global experimentSwitch
     if(graph == True):
@@ -722,7 +725,6 @@ for x in f:
     stopWordList.append(words[0])
 
 
-print(stopWordList)
 
 readInFile(1)
 stopWordDictionary = smoothingData(stopWordDictionary)
@@ -755,6 +757,7 @@ ChecktestingData(2, len(sizeDictionary), False, " ")
 
 
 
+userInputTwo = input("Press Enter to run Experiment Three")
 ####Experiment Three
 ##less than 5
 
@@ -787,13 +790,10 @@ ChecktestingData(3, len(stopWordDictionary), True, "Equal One")
 
 
 
-
-
-
-
 stopWordDictionary.clear()
 labelDictionary.clear()
 stopWordList.clear()
+
 
 
 for key in baseFrequency:
@@ -923,10 +923,15 @@ freqencyGraph(0.2, "Top 20 %")
 freqencyGraph(0.25, "Top 25 %")
 
 
-print("sizeLength", str(len(sizeDictionary)))
-print("stopLength", str(len(stopWordDictionary)))
-print("baseLenghth", str(len(baselineDictionary)))
 
 
-plt.xticks(np.arange(0, 1, 0.2))
+# start, end = axs[0,0].get_ylim()
+# print(start)
+# print(end)
+# plt.sca(axs[0, 0])
+# plt.yticks(np.arange(start, end, 0.2))
+#plt.tight_layout(pad=0.2, w_pad=0.2, h_pad=1.0)
+
+figManager = plt.get_current_fig_manager()
+figManager.window.showMaximized()
 plt.show()
