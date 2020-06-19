@@ -140,6 +140,7 @@ def addtoDict(word, postType, Experiment):
 def readInFile(Experiment):
     global labelDictionary
     removedWords = []
+    #hns_2018_2019
     with open('hns_2018_2019.csv',encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -531,18 +532,22 @@ def ChecktestingData(integer, dictionaryLength, graph, inputString):
 
     global experimentSwitch
     if(graph == True):
-        if(experimentSwitch):
+        if(experimentSwitch and not(inputString == "Baseline")):
+            axs[0,0].plot(dictionaryLength, Accuracy, "ro")
+            axs[0,1].plot(dictionaryLength, metricMatrix[0], "ro")
+            axs[0,2].plot(dictionaryLength, metricMatrix[1], "ro")
+            axs[0,3].plot(dictionaryLength, metricMatrix[2], "ro")
+        elif not(inputString == "Baseline") :
+            axs[1,0].plot(dictionaryLength, Accuracy, "ro")
+            axs[1,1].plot(dictionaryLength, metricMatrix[0], "ro")
+            axs[1,2].plot(dictionaryLength, metricMatrix[1], "ro")
+            axs[1,3].plot(dictionaryLength, metricMatrix[2], "ro")
+        
+        if(inputString == "Baseline" ):
             axs[0,0].plot(dictionaryLength, Accuracy, "*")
             axs[0,1].plot(dictionaryLength, metricMatrix[0], "*")
             axs[0,2].plot(dictionaryLength, metricMatrix[1], "*")
             axs[0,3].plot(dictionaryLength, metricMatrix[2], "*")
-        else:
-            axs[1,0].plot(dictionaryLength, Accuracy, "*")
-            axs[1,1].plot(dictionaryLength, metricMatrix[0], "*")
-            axs[1,2].plot(dictionaryLength, metricMatrix[1], "*")
-            axs[1,3].plot(dictionaryLength, metricMatrix[2], "*")
-        
-        if(inputString == "Baseline" ):
             axs[1,0].plot(dictionaryLength, Accuracy, "*")
             axs[1,1].plot(dictionaryLength, metricMatrix[0], "*")
             axs[1,2].plot(dictionaryLength, metricMatrix[1], "*")
@@ -926,11 +931,23 @@ freqencyGraph(0.25, "Top 25 %")
 
 
 # start, end = axs[0,0].get_ylim()
-# print(start)
-# print(end)
+# # print(start)
+# # print(end)
 # plt.sca(axs[0, 0])
-# plt.yticks(np.arange(start, end, 0.2))
-#plt.tight_layout(pad=0.2, w_pad=0.2, h_pad=1.0)
+# plt.yticks(np.arange(start-0.05, 1+0.05, 0.05))
+
+i = 0
+while i < 2:
+    j = 0
+    while j < 4:
+        start, end = axs[i,j].get_ylim()
+        start = round(start, 2)
+        end = round(end, 2)
+        plt.sca(axs[i, j])
+        plt.yticks(np.arange(start-0.05, 1+0.05, 0.05))
+        j += 1
+    i += 1
+
 
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
